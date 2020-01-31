@@ -1,0 +1,52 @@
+#!/usr/bin/python3.7
+
+import os
+import glob
+import sys
+import tarfile
+#print("Starting spark")
+def main(*argv): 
+    cmd = list(argv[0])
+    x = 0
+    #print("Checking Dimensions")
+    #print(glob.glob("dimensions/*.sources"))
+    while True:
+      dimfile = str(glob.glob("dimensions/*.sources")[x])
+      #print(dimfile)
+      with open(dimfile,"r") as file:
+        data = file.readlines()
+        #print(data)
+        if str(cmd[2]) in str(data):
+          #print("Found source in dimension ",dimfile)
+          dimension = dimfile.split("/", 1)[1]
+          break
+      x +=1
+    print("Function:", cmd[1]) 
+    print("Package:", cmd[2])
+    print("Dimension: ",dimension)
+    if cmd[1] == "install":
+      f =open(dimfile,"r")
+      link = f.readline().split(" ")[1]
+      print("Preparing to install...")
+      os.system("sudo mkdir /usr/.spark")
+      os.system("sudo mkdir /usr/.spark/tmp")
+      os.system("sudo mkdir /usr/.spark/packs")
+      while True:
+        try:
+          download_link = str('''wget -q'''+str(" -O ")+str(cmd[2]+str(".tar.gz"))+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link))
+          #print(download_link)
+          os.system("cd /usr/.spark/tmp && sudo "+str(download_link))
+          break
+        except:
+          print("ERROR - could not download ",arg1)
+          break
+      #print(cmd[1]," has ",len(glob.glob(str(cmd[2])+"*")))
+      print("Unpacking (generic "+dimension+")")
+      os.system("cd /usr/.spark/tmp && sudo tar xvzf "+str(cmd[2])+".tar.gz")
+      #tf = tarfile.open("/usr/.spark/tmp/"+str(cmd[2])+".tar.gz")
+      #tf.extractall("/usr/.spark/packs/") 
+      print("Building (generic ",dimension,")")
+      os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"* &&" + '''sudo ./configure --prefix=/usr && sudo make''')
+      
+if __name__ == "__main__":
+   main(sys.argv)
