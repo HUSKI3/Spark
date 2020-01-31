@@ -1,0 +1,7 @@
+1. Add spark upgrade
+
+spark upgrade -> /usr/.spark/packs/installed.spark -> spark install installed.spark
+
+2. Add spark deps
+
+spark deps -> find dependacies -> spark install dependancies

@@ -1,4 +1,4 @@
-#!/usr/bin/python3.7
+#!/usr/bin/python3
 
 import os
 import glob
@@ -6,31 +6,36 @@ import sys
 import tarfile
 #print("Starting spark")
 def main(*argv): 
+    os.system("sudo mkdir /usr/.spark")
+    os.system("sudo mkdir /usr/.spark/tmp")
+    os.system("sudo mkdir /usr/.spark/packs")
+    os.system("sudo mkdir /usr/.spark/dimensions")
     cmd = list(argv[0])
     x = 0
     #print("Checking Dimensions")
     #print(glob.glob("dimensions/*.sources"))
-    while True:
-      dimfile = str(glob.glob("dimensions/*.sources")[x])
-      #print(dimfile)
-      with open(dimfile,"r") as file:
-        data = file.readlines()
-        #print(data)
-        if str(cmd[2]) in str(data):
-          #print("Found source in dimension ",dimfile)
-          dimension = dimfile.split("/", 1)[1]
-          break
-      x +=1
     print("Function:", cmd[1]) 
-    print("Package:", cmd[2])
-    print("Dimension: ",dimension)
     if cmd[1] == "install":
+      print("Package:", cmd[2])
+      while True:
+        #print(x)
+        #print(str(glob.glob("/usr/.spark/dimensions/*.sources")))
+        dimfile = str(glob.glob("/usr/.spark/dimensions/*.sources")[x])
+        #print(dimfile)
+        with open(dimfile,"r") as file:
+          data = file.readlines()
+          #print(data)
+          if str(cmd[2]) in str(data):
+            #print("Found source in dimension ",dimfile)
+            dimension = dimfile.split("/", 1)[1]
+            break
+        x +=1
+      print("Dimension: ",dimension)
       f =open(dimfile,"r")
-      link = f.readline().split(" ")[1]
+      link = f.readlines()
+      link = str(link[y]) #y is the line where the package is located, add this later
+      print(link)
       print("Preparing to install...")
-      os.system("sudo mkdir /usr/.spark")
-      os.system("sudo mkdir /usr/.spark/tmp")
-      os.system("sudo mkdir /usr/.spark/packs")
       while True:
         try:
           download_link = str('''wget -q'''+str(" -O ")+str(cmd[2]+str(".tar.gz"))+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link))
@@ -46,7 +51,20 @@ def main(*argv):
       #tf = tarfile.open("/usr/.spark/tmp/"+str(cmd[2])+".tar.gz")
       #tf.extractall("/usr/.spark/packs/") 
       print("Building (generic ",dimension,")")
-      os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"* &&" + '''sudo ./configure --prefix=/usr && sudo make''')
-      
+      if dimension == "igniteverse.sources":
+        os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"* &&" + '''sudo ./configure --prefix=/usr && sudo make''')
+      else:
+        print("Dimension has no build instruction")
+    elif cmd [1] == "update":
+      link = "-O igniteverse.sources https://raw.githubusercontent.com/HUSKI3/Spark-ready-Packages/master/dimensions/igniteverse.sources"
+      os.system(str('''cd /usr/.spark/dimensions && sudo wget -q'''+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link)))
+      link = "-O omniverse.sources https://raw.githubusercontent.com/HUSKI3/Spark-ready-Packages/master/dimensions/omniverse.sources"
+      os.system(str('''cd /usr/.spark/dimensions && sudo wget -q'''+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link)))
+      link = "-O multiverse.sources https://raw.githubusercontent.com/HUSKI3/Spark-ready-Packages/master/dimensions/multiverse.sources"
+      os.system(str('''cd /usr/.spark/dimensions && sudo wget -q'''+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link)))
+      print("Updated Dimensions")
+      print("Run 'spark upgrade' to upgrade utilities and libraries")
+
 if __name__ == "__main__":
    main(sys.argv)
+
