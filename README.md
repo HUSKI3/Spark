@@ -1,4 +1,5 @@
 # Spark
+Spark is a simple and easy to use package manager for linux, it is created on a complex system of pipes and universes to manage versions of packages and distributions it can download them on.
 
 ## Installing
 ```
