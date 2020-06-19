@@ -6,15 +6,19 @@ import sys
 import tarfile
 #print("Starting spark")
 def main(*argv): 
-    os.system("sudo mkdir /usr/.spark")
-    os.system("sudo mkdir /usr/.spark/tmp")
-    os.system("sudo mkdir /usr/.spark/packs")
-    os.system("sudo mkdir /usr/.spark/dimensions")
+    os.system("sudo mkdir -p /usr/.spark")
+    os.system("sudo mkdir -p /usr/.spark/tmp")
+    os.system("sudo mkdir -p /usr/.spark/packs")
+    os.system("sudo mkdir -p /usr/.spark/dimensions")
     cmd = list(argv[0])
     x = 0
     #print("Checking Dimensions")
     #print(glob.glob("dimensions/*.sources"))
-    print("Function:", cmd[1]) 
+    try:
+      print("Function:", cmd[1]) 
+    except IndexError:
+      print("Please specify a function")
+      quit()
     if cmd[1] == "install":
       print("Package:", cmd[2])
       while True:
@@ -33,6 +37,7 @@ def main(*argv):
       print("Dimension: ",dimension)
       f =open(dimfile,"r")
       link = f.readlines()
+      
       link = str(link[y]) #y is the line where the package is located, add this later
       print(link)
       print("Preparing to install...")
