@@ -37,9 +37,13 @@ def main(*argv):
       print("Dimension: ",dimension)
       f =open(dimfile,"r")
       link = f.readlines()
-      
-      link = str(link[y]) #y is the line where the package is located, add this later
-      print(link)
+      for y in link:
+        if str(cmd[2]) in y:
+          downlink=y
+      link = downlink.split()
+      #print(link)
+      link = str(link[1]) 
+      #print(link)
       print("Preparing to install...")
       while True:
         try:
@@ -52,7 +56,7 @@ def main(*argv):
           break
       #print(cmd[1]," has ",len(glob.glob(str(cmd[2])+"*")))
       print("Unpacking (generic "+dimension+")")
-      os.system("cd /usr/.spark/tmp && sudo tar xvzf "+str(cmd[2])+".tar.gz")
+      os.system("cd /usr/.spark/tmp && sudo tar xzf "+str(cmd[2])+".tar.gz")
       #tf = tarfile.open("/usr/.spark/tmp/"+str(cmd[2])+".tar.gz")
       #tf.extractall("/usr/.spark/packs/") 
       print("Building (generic ",dimension,")")
