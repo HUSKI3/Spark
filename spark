@@ -55,16 +55,26 @@ def main(*argv):
           print("ERROR - could not download ",arg1)
           break
       #print(cmd[1]," has ",len(glob.glob(str(cmd[2])+"*")))
-      print("Unpacking (generic "+dimension+")")
-      os.system("cd /usr/.spark/tmp && sudo tar xzf "+str(cmd[2])+".tar.gz")
-      #tf = tarfile.open("/usr/.spark/tmp/"+str(cmd[2])+".tar.gz")
-      #tf.extractall("/usr/.spark/packs/") 
-      print("Building (generic ",dimension,")")
+      if "deb" in link:
+        print("Unpacking (debian "+dimension+")")
+        os.system("cd /usr/.spark/tmp && sudo tar xzf "+str(cmd[2])+".tar.gz")
+        #tf = tarfile.open("/usr/.spark/tmp/"+str(cmd[2])+".tar.gz")
+        #tf.extractall("/usr/.spark/packs/") 
+        print("Building (debian ",dimension,")")
+      else:
+        print("Unpacking (generic "+dimension+")")
+        os.system("cd /usr/.spark/tmp && sudo tar xzf "+str(cmd[2])+".tar.gz")
+        #tf = tarfile.open("/usr/.spark/tmp/"+str(cmd[2])+".tar.gz")
+        #tf.extractall("/usr/.spark/packs/") 
+        print("Building (generic ",dimension,")")
       if dimension == "igniteverse.sources":
         os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"* &&" + '''sudo ./configure --prefix=/usr && sudo make''')
+      elif omniverse in dimension:
+        os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"* &&" + '''sudo dpkg -i'''+str(cmd[2])+"*")
       else:
         print("Dimension has no build instruction")
     elif cmd [1] == "update":
+      os.system(str('''cd /usr/.spark/dimensions && sudo rm -r *'''))
       link = "-O igniteverse.sources https://raw.githubusercontent.com/HUSKI3/Spark-ready-Packages/master/dimensions/igniteverse.sources"
       os.system(str('''cd /usr/.spark/dimensions && sudo wget -q'''+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link)))
       link = "-O omniverse.sources https://raw.githubusercontent.com/HUSKI3/Spark-ready-Packages/master/dimensions/omniverse.sources"
@@ -73,6 +83,8 @@ def main(*argv):
       os.system(str('''cd /usr/.spark/dimensions && sudo wget -q'''+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link)))
       print("Updated Dimensions")
       print("Run 'spark upgrade' to upgrade utilities and libraries")
+    elif cmd[1] == "help":
+      print('''fSpark is a simple and easy to use package manager for linux, it is created on a complex system of pipes and universes to manage versions of packages and distributions it can download them on. \n spark install <package>''')
 
 if __name__ == "__main__":
    main(sys.argv)
