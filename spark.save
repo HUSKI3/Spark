@@ -70,12 +70,8 @@ def main(*argv):
         #tf = tarfile.open("/usr/.spark/tmp/"+str(cmd[2])+".tar.gz")
         #tf.extractall("/usr/.spark/packs/") 
         print("Building (generic ",dimension,")")
-      if "igniteverse.sources" in dimension:
-        os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"* &&" + '''sudo bash configure --prefix=/usr     \
-            --sysconfdir=/etc \
-            --enable-utf8     \
-            --docdir=/usr/share/doc/''' + str(cmd[2]) + ''' &&
-make''' + " && " + '''sudo make install && sudo install -v -m644 doc/ /usr/share/doc/'''+str(cmd[2]))
+      if dimension == "igniteverse.sources":
+        os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"* &&" + '''sudo ./configure --prefix=/usr && sudo make''')
       elif "omniverse" in dimension:
         print(cmd[2])
         os.system("cd /usr/.spark/tmp/ &&" + '''sudo dpkg -i '''+str(cmd[2])+"*")
