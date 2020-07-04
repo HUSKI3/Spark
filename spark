@@ -79,6 +79,10 @@ make''' + " && " + '''sudo make install && sudo install -v -m644 doc/ /usr/share
       elif "omniverse" in dimension:
         print(cmd[2])
         os.system("cd /usr/.spark/tmp/ &&" + '''sudo dpkg -i '''+str(cmd[2])+"*")
+      elif "universe" in dimension:
+        print(cmd[2])
+        print("Checking for build instructions...")
+        os.system("cd /usr/.spark/tmp/ &&" + ''' thing'''+str(cmd[2])+"*")
       else:
         print("Dimension has no build instruction")
     elif cmd [1] == "update":
@@ -92,7 +96,7 @@ make''' + " && " + '''sudo make install && sudo install -v -m644 doc/ /usr/share
       print("Updated Dimensions")
       print("Run 'spark upgrade' to upgrade utilities and libraries")
     elif cmd[1] == "help":
-      print('''Spark is a simple and easy to use package manager for linux, it is created on a complex system of pipes and universes to manage versions of packages and distributions it can download them on. \nspark install <package>\nspark update \nspark help''')
+      print('''Spark is a simple and easy to use package manager for linux, it is created on a system of pipes and universes to manage versions of packages and distributions it can download them on. \nspark install <package>\nspark update \nspark help''')
     elif cmd[1] == "clear":
       print("Cleaning tmp")
       os.system(str('''cd /usr/.spark/tmp && sudo rm -r *'''))
