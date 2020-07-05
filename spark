@@ -17,7 +17,7 @@ def main(*argv):
     try:
       print("Function:", cmd[1]) 
     except IndexError:
-      print("Please specify a function")
+      print("[Spark] Please specify a function")
       quit()
     if cmd[1] == "install":
       print("Package:", cmd[2])
