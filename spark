@@ -5,27 +5,27 @@ import glob
 import sys
 import tarfile
 import subprocess
+import platform
 
 #print("Starting spark")
 def main(*argv): 
     # Create directories for spark
     os.system("sudo mkdir -p /usr/.spark")
     os.system("sudo mkdir -p /usr/.spark/tmp")
-    os.system("sudo mkdir -p /usr/.spark/packs")
+    os.system("sudo mkdir -p /usr/.spark/packs && sudo touch /usr/.spark/packs/installed && sudo chmod 777 /usr/.spark/packs/installed")
     os.system("sudo mkdir -p /usr/.spark/dimensions")
     cmd = list(argv[0])
     x = 0
     #print("Checking Dimensions")
     #print(glob.glob("dimensions/*.sources"))
     try:
-      print("Function:", cmd[1]) 
+      # check if it exists
+      cmd[1] 
     except IndexError:
       print("[Spark] Please specify a function")
       quit()
     # If route install
     if cmd[1] == "install":
-      #Show which package is to be installed
-      print("Package:", cmd[2])
       while True:
         #print(x)
         #print(str(glob.glob("/usr/.spark/dimensions/*.sources")))
@@ -42,7 +42,6 @@ def main(*argv):
             break
         x+=1
       # Show selected dimension
-      print("Dimension: ",dimension)
       if dimension == "usr/.spark/dimensions/omniverse.sources":
         debian = True
       else:
@@ -57,14 +56,24 @@ def main(*argv):
         srcdir = str(link[2])
       else:
          srcdir = "." 
-      #Get scomplexity 
+      #Get complexity 
       if str(link[2]) != "/":
         srcdir = str(link[2])
       else:
          srcdir = "." 
+      with open("/usr/.spark/packs/installed", "r") as f:
+        inst = f.readlines()
+        if cmd[2]+"," in inst:
+          print("Already installed!")
+          quit()
+      with open("/usr/.spark/packs/installed", "a") as f:
+        inst = f.write(" "+cmd[2]+",")
       # Get the download link
       link = str(link[1]) 
       #print(link)
+      #Show which package is to be installed
+      print("Package:", cmd[2])
+      print("Dimension: ",dimension)
       print("Preparing to install...",srcdir)
       while True:
         try:
@@ -95,7 +104,7 @@ def main(*argv):
       if "igniteverse.sources" in dimension:
         try:
           subprocess.run(['cd','/usr/.spark/tmp/',str(cmd[2]),'*','&&','export','FORCE_UNSAFE_CONFIGURE=1','&','sudo','bash','configure','--prefix=/usr','--sysconfdir=/etc','--enable-utf8'], check = True, shell=True)
-        except subprocess.CalledProcessError:
+        except:
           print ('No configure! Aborting!')  
         os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"*/"+srcdir+" && sudo make && sudo make install && sudo install -v -m644 "+str(cmd[2]))
       elif "omniverse" in dimension:
@@ -118,11 +127,40 @@ def main(*argv):
       print("Updated Dimensions")
       print("Run 'spark upgrade' to upgrade utilities and libraries")
     elif cmd[1] == "help":
-      print('''Spark is a simple and easy to use package manager for linux, it is created on a system of pipes and universes to manage versions of packages and distributions it can download them on. \nspark install <package>\nspark update \nspark help''')
+      print('''Spark is a simple and easy to use package manager for linux, it is created on a system of pipes and universes to manage versions of packages and distributions it can download them on. \nspark install <package>\nspark update \nspark help \nspark installed \nspark system (WIP, but very pretty)''')
     elif cmd[1] == "clear":
       print("Cleaning tmp...")
       os.system(str('''cd /usr/.spark/tmp && sudo rm -r *'''))
       print("Cleaned!")
+    elif cmd[1] == "system":
+      with open("/proc/cpuinfo", "r")  as f:
+        info = f.readlines()
+      cpuinfo = [x.strip().split(":")[1] for x in info if "model name"  in x]
+      with open("/proc/meminfo", "r") as f:
+          lines = f.readlines()
+      with open("/proc/loadavg", "r") as f:
+        load = f.read().strip()
+      print(str('''         _nnnn_
+        dGGGGMMb
+       @p~qp~~qMb            Arch:    '''+platform.architecture()[0]+'''
+       M|@||@) M|            Machine: '''+platform.machine()+'''
+       @,----.JM|            Node:    '''+platform.node()+'''
+      JS^\__/  qKL           System:  '''+platform.system()+'''
+     dZP        qKRb         CPU:     '''+str(cpuinfo[0])+'''
+    dZP          qKKb        Memory: 
+   fZP            SMMb          '''+str(lines[0].strip())+'''
+   HZM            MMMM          '''+str(lines[1].strip())+'''
+   FqM            MMMM       Load:    '''+str(load)+'''
+ __| ".        |\dS"qML
+ |    `.       | `' \Zq
+_)      \.___.,|     .'
+\____   )MMMMMP|   .'
+     `-'       `--' '''))
+    elif cmd[1] == "installed":
+      with open("/usr/.spark/packs/installed", "r") as f:
+        inst= f.readlines()
+      for elem in inst:
+        print(elem)
     else:
       print("No such function!")
 if __name__ == "__main__":
