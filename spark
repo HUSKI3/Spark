@@ -4,8 +4,11 @@ import os
 import glob
 import sys
 import tarfile
+import subprocess
+
 #print("Starting spark")
 def main(*argv): 
+    # Create directories for spark
     os.system("sudo mkdir -p /usr/.spark")
     os.system("sudo mkdir -p /usr/.spark/tmp")
     os.system("sudo mkdir -p /usr/.spark/packs")
@@ -19,13 +22,17 @@ def main(*argv):
     except IndexError:
       print("[Spark] Please specify a function")
       quit()
+    # If route install
     if cmd[1] == "install":
+      #Show which package is to be installed
       print("Package:", cmd[2])
       while True:
         #print(x)
         #print(str(glob.glob("/usr/.spark/dimensions/*.sources")))
+        # Get sources
         dimfile = str(glob.glob("/usr/.spark/dimensions/*.sources")[x])
         #print(dimfile)
+        # Read sources files
         with open(dimfile,"r") as file:
           data = file.readlines()
           #print(data)
@@ -33,21 +40,36 @@ def main(*argv):
             #print("Found source in dimension ",dimfile)
             dimension = dimfile.split("/", 1)[1]
             break
-        x +=1
+        x+=1
+      # Show selected dimension
       print("Dimension: ",dimension)
+      if dimension == "usr/.spark/dimensions/omniverse.sources":
+        debian = True
+      else:
+        debian = False
       f =open(dimfile,"r")
       link = f.readlines()
       for y in link:
         if str(cmd[2]) in y:
           downlink=y
       link = downlink.split()
-      #print(link)
+      if str(link[2]) != "/":
+        srcdir = str(link[2])
+      else:
+         srcdir = "." 
+      #Get scomplexity 
+      if str(link[2]) != "/":
+        srcdir = str(link[2])
+      else:
+         srcdir = "." 
+      # Get the download link
       link = str(link[1]) 
       #print(link)
-      print("Preparing to install...")
+      print("Preparing to install...",srcdir)
       while True:
         try:
-          if "deb" in link:
+          # If debian install as a deb package
+          if debian:
             download_link = str('''wget -q'''+str(" -O ")+str(cmd[2]+str(".deb"))+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link))
           else:
             download_link = str('''wget -q'''+str(" -O ")+str(cmd[2]+str(".tar.gz"))+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link))
@@ -58,12 +80,12 @@ def main(*argv):
           print("ERROR - could not download ",arg1)
           break
       #print(cmd[1]," has ",len(glob.glob(str(cmd[2])+"*")))
-      if "deb" in link:
+      # If debian install using dpkg
+      if debian:
         print("Unpacking (debian "+dimension+")")
-        #os.system("cd /usr/.spark/tmp && sudo tar xzf "+str(cmd[2])+".tar.gz")
-        #tf = tarfile.open("/usr/.spark/tmp/"+str(cmd[2])+".tar.gz")
-        #tf.extractall("/usr/.spark/packs/") 
+        # Do somethign here later
         print("Building (debian ",dimension,")")
+      # If not debian install as generic
       else:
         print("Unpacking (generic "+dimension+")")
         os.system("cd /usr/.spark/tmp && sudo tar xzf "+str(cmd[2])+".tar.gz")
@@ -71,11 +93,11 @@ def main(*argv):
         #tf.extractall("/usr/.spark/packs/") 
         print("Building (generic ",dimension,")")
       if "igniteverse.sources" in dimension:
-        os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"* &&" + '''sudo bash configure --prefix=/usr     \
-            --sysconfdir=/etc \
-            --enable-utf8     \
-            --docdir=/usr/share/doc/''' + str(cmd[2]) + ''' &&
-make''' + " && " + '''sudo make install && sudo install -v -m644 doc/ /usr/share/doc/'''+str(cmd[2]))
+        try:
+          subprocess.run(['cd','/usr/.spark/tmp/',str(cmd[2]),'*','&&','export','FORCE_UNSAFE_CONFIGURE=1','&','sudo','bash','configure','--prefix=/usr','--sysconfdir=/etc','--enable-utf8'], check = True, shell=True)
+        except subprocess.CalledProcessError:
+          print ('No configure! Aborting!')  
+        os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"*/"+srcdir+" && sudo make && sudo make install && sudo install -v -m644 "+str(cmd[2]))
       elif "omniverse" in dimension:
         print(cmd[2])
         os.system("cd /usr/.spark/tmp/ &&" + '''sudo dpkg -i '''+str(cmd[2])+"*")
@@ -84,7 +106,7 @@ make''' + " && " + '''sudo make install && sudo install -v -m644 doc/ /usr/share
         print("Checking for build instructions...")
         os.system("cd /usr/.spark/tmp/ &&" + ''' thing'''+str(cmd[2])+"*")
       else:
-        print("Dimension has no build instruction")
+        print("Dimension has no build instructions!")
     elif cmd [1] == "update":
       os.system(str('''cd /usr/.spark/dimensions && sudo rm -r *'''))
       link = "-O igniteverse.sources https://raw.githubusercontent.com/HUSKI3/Spark-ready-Packages/master/dimensions/igniteverse.sources"
@@ -98,9 +120,11 @@ make''' + " && " + '''sudo make install && sudo install -v -m644 doc/ /usr/share
     elif cmd[1] == "help":
       print('''Spark is a simple and easy to use package manager for linux, it is created on a system of pipes and universes to manage versions of packages and distributions it can download them on. \nspark install <package>\nspark update \nspark help''')
     elif cmd[1] == "clear":
-      print("Cleaning tmp")
+      print("Cleaning tmp...")
       os.system(str('''cd /usr/.spark/tmp && sudo rm -r *'''))
       print("Cleaned!")
+    else:
+      print("No such function!")
 if __name__ == "__main__":
    main(sys.argv)
 
