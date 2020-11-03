@@ -24,6 +24,14 @@ def main(*argv):
     except IndexError:
       print("[Spark] Please specify a function")
       quit()
+    try:
+      # check if it exists
+      cmd[3] 
+      passedArg=True
+    except IndexError:
+      passedArg=False
+      if cmd[1] == "install":
+        print("[Spark] Passing a second argument is recommended!")
     # If route install
     if cmd[1] == "install":
       while True:
@@ -63,11 +71,19 @@ def main(*argv):
          srcdir = "." 
       with open("/usr/.spark/packs/installed", "r") as f:
         inst = f.readlines()
-        if cmd[2]+"," in inst:
-          print("Already installed!")
+        quitFlag = False
+        try:
+          if cmd[2] in inst[0]:
+            #print(inst[0])
+            print("[Spark] Already installed!")
+            quitFlag = True
+        except:
+          #the installed file is not present!
+          print("",end='')
+        if quitFlag:
           quit()
       with open("/usr/.spark/packs/installed", "a") as f:
-        inst = f.write(" "+cmd[2]+",")
+        inst = f.write(" "+cmd[2]+" ,")
       # Get the download link
       link = str(link[1]) 
       #print(link)
@@ -103,10 +119,12 @@ def main(*argv):
         print("Building (generic ",dimension,")")
       if "igniteverse.sources" in dimension:
         try:
-          subprocess.run(['cd','/usr/.spark/tmp/',str(cmd[2]),'*','&&','export','FORCE_UNSAFE_CONFIGURE=1','&','sudo','bash','configure','--prefix=/usr','--sysconfdir=/etc','--enable-utf8'], check = True, shell=True)
+          subprocess.run(['cd','/usr/.spark/tmp/',str(cmd[2]),'*','&&','export','FORCE_UNSAFE_CONFIGURE=1','&','sudo','bash','configure','--prefix=/usr','--quiet','--sysconfdir=/etc','--enable-utf8','1>&1'], check = True, shell=True)
         except:
           print ('No configure! Aborting!')  
-        os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"*/"+srcdir+" && sudo make && sudo make install && sudo install -v -m644 "+str(cmd[2]))
+        if passedArg:
+          if "q" in cmd[3]:
+            os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"*/"+srcdir+" && sudo make --quiet && sudo make --quiet install && sudo install -v -m644 "+str(cmd[2]))
       elif "omniverse" in dimension:
         print(cmd[2])
         os.system("cd /usr/.spark/tmp/ &&" + '''sudo dpkg -i '''+str(cmd[2])+"*")
