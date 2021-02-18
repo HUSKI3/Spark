@@ -10,12 +10,12 @@ chmod a+x spark
 ```
 ## Setting up
 ```
-spark update
+(as root) spark -u
 ```
 
 ## Running
 ```
-spark help
+spark -h
 or
-spark install nano 
+(as root) spark -i nano 
 ```
