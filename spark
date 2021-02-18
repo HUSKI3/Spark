@@ -6,181 +6,325 @@ import sys
 import tarfile
 import subprocess
 import platform
+import requests
 
-#print("Starting spark")
-def main(*argv): 
-    # Create directories for spark
-    os.system("sudo mkdir -p /usr/.spark")
-    os.system("sudo mkdir -p /usr/.spark/tmp")
-    os.system("sudo mkdir -p /usr/.spark/packs && sudo touch /usr/.spark/packs/installed && sudo chmod 777 /usr/.spark/packs/installed")
-    os.system("sudo mkdir -p /usr/.spark/dimensions")
-    cmd = list(argv[0])
-    x = 0
-    #print("Checking Dimensions")
-    #print(glob.glob("dimensions/*.sources"))
+# 
+# ==============================================
+#                     Ezconf
+# ==============================================
+#
+
+import json
+import re
+
+
+
+class ezconfig:
+
+  def __init__(self):
+    self.filename = ""
+    self.datajson = None
+
+  def read(self,filename):
+    """
+    Reads the config file and saves the values
+    :return: 
+    """
     try:
-      # check if it exists
-      cmd[1] 
-    except IndexError:
-      print("[Spark] Please specify a function")
+      with open(str(filename),"r") as f:
+        data = f.read()
+        #check if the loaded file is json
+        try:
+          datajson = json.loads(data)
+        except Exception as e:
+          print('could not load '+str(filename)+', add a basic entry to the config like {"name":"Example"}. Python error: '+str(e))
+          return 1
+        self.datajson = datajson
+        self.filename = filename
+        f.close()
+        return 0
+    except:
+      return 1
+
+  def get(self,var,*args):
+    """
+    Return a variable
+    :param var: variable to get
+    :return var_val:
+    """
+    #update datajson
+    self.read(self.filename)
+    try:
+      var_val = self.datajson[str(var)]
+      if bool(args)!=False:
+        p = re.compile('(?<!\\\\)\'')
+        var_val = p.sub('\"', str(var_val))
+        return json.loads(str(var_val))[str(args[0])]
+    except Exception as e:
+      print("[1] could not get variable ["+str(var)+"] does it exist in config.json?\nPython error: "+str(e))
       quit()
-    try:
-      # check if it exists
-      cmd[3] 
-      passedArg=True
-    except IndexError:
-      passedArg=False
-      if cmd[1] == "install":
-        print("[Spark] Passing a second argument is recommended!")
-    # If route install
-    if cmd[1] == "install":
-      while True:
-        #print(x)
-        #print(str(glob.glob("/usr/.spark/dimensions/*.sources")))
-        # Get sources
-        dimfile = str(glob.glob("/usr/.spark/dimensions/*.sources")[x])
-        #print(dimfile)
-        # Read sources files
-        with open(dimfile,"r") as file:
-          data = file.readlines()
-          #print(data)
-          if str(cmd[2]) in str(data):
-            #print("Found source in dimension ",dimfile)
-            dimension = dimfile.split("/", 1)[1]
-            break
-        x+=1
-      # Show selected dimension
-      if dimension == "usr/.spark/dimensions/omniverse.sources":
-        debian = True
-      else:
-        debian = False
-      f =open(dimfile,"r")
-      link = f.readlines()
-      for y in link:
-        if str(cmd[2]) in y:
-          downlink=y
-      link = downlink.split()
-      if str(link[2]) != "/":
-        srcdir = str(link[2])
-      else:
-         srcdir = "." 
-      #Get complexity 
-      if str(link[2]) != "/":
-        srcdir = str(link[2])
-      else:
-         srcdir = "." 
-      with open("/usr/.spark/packs/installed", "r") as f:
-        inst = f.readlines()
-        quitFlag = False
-        try:
-          if cmd[2] in inst[0]:
-            #print(inst[0])
-            print("[Spark] Already installed!")
-            quitFlag = True
-        except:
-          #the installed file is not present!
-          print("",end='')
-        if quitFlag:
-          quit()
-      with open("/usr/.spark/packs/installed", "a") as f:
-        inst = f.write(" "+cmd[2]+" ,")
-      # Get the download link
-      link = str(link[1]) 
-      #print(link)
-      #Show which package is to be installed
-      print("Package:", cmd[2])
-      print("Dimension: ",dimension)
-      print("Preparing to install...",srcdir)
-      while True:
-        try:
-          # If debian install as a deb package
-          if debian:
-            download_link = str('''wget -q'''+str(" -O ")+str(cmd[2]+str(".deb"))+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link))
-          else:
-            download_link = str('''wget -q'''+str(" -O ")+str(cmd[2]+str(".tar.gz"))+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link))
-          #print(download_link)
-          os.system("cd /usr/.spark/tmp && sudo "+str(download_link))
-          break
-        except:
-          print("ERROR - could not download ",arg1)
-          break
-      #print(cmd[1]," has ",len(glob.glob(str(cmd[2])+"*")))
-      # If debian install using dpkg
-      if debian:
-        print("Unpacking (debian "+dimension+")")
-        # Do somethign here later
-        print("Building (debian ",dimension,")")
-      # If not debian install as generic
-      else:
-        print("Unpacking (generic "+dimension+")")
-        os.system("cd /usr/.spark/tmp && sudo tar xzf "+str(cmd[2])+".tar.gz")
-        #tf = tarfile.open("/usr/.spark/tmp/"+str(cmd[2])+".tar.gz")
-        #tf.extractall("/usr/.spark/packs/") 
-        print("Building (generic ",dimension,")")
-      if "igniteverse.sources" in dimension:
-        try:
-          subprocess.run(['cd','/usr/.spark/tmp/',str(cmd[2]),'*','&&','export','FORCE_UNSAFE_CONFIGURE=1','&','sudo','bash','configure','--prefix=/usr','--quiet','--sysconfdir=/etc','--enable-utf8','1>&1'], check = True, shell=True)
-        except:
-          print ('No configure! Aborting!')  
-        if passedArg:
-          if "q" in cmd[3]:
-            os.system("cd /usr/.spark/tmp/"+str(cmd[2])+"*/"+srcdir+" && sudo make --quiet && sudo make --quiet install && sudo install -v -m644 "+str(cmd[2]))
-      elif "omniverse" in dimension:
-        print(cmd[2])
-        os.system("cd /usr/.spark/tmp/ &&" + '''sudo dpkg -i '''+str(cmd[2])+"*")
-      elif "universe" in dimension:
-        print(cmd[2])
-        print("Checking for build instructions...")
-        os.system("cd /usr/.spark/tmp/ &&" + ''' thing'''+str(cmd[2])+"*")
-      else:
-        print("Dimension has no build instructions!")
-    elif cmd [1] == "update":
-      os.system(str('''cd /usr/.spark/dimensions && sudo rm -r *'''))
-      link = "-O igniteverse.sources https://raw.githubusercontent.com/HUSKI3/Spark-ready-Packages/master/dimensions/igniteverse.sources"
-      os.system(str('''cd /usr/.spark/dimensions && sudo wget -q'''+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link)))
-      link = "-O omniverse.sources https://raw.githubusercontent.com/HUSKI3/Spark-ready-Packages/master/dimensions/omniverse.sources"
-      os.system(str('''cd /usr/.spark/dimensions && sudo wget -q'''+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link)))
-      link = "-O multiverse.sources https://raw.githubusercontent.com/HUSKI3/Spark-ready-Packages/master/dimensions/multiverse.sources"
-      os.system(str('''cd /usr/.spark/dimensions && sudo wget -q'''+''' --user-agent="Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36" '''+str(link)))
-      print("Updated Dimensions")
-      print("Run 'spark upgrade' to upgrade utilities and libraries")
-    elif cmd[1] == "help":
-      print('''Spark is a simple and easy to use package manager for linux, it is created on a system of pipes and universes to manage versions of packages and distributions it can download them on. \nspark install <package>\nspark update \nspark help \nspark installed \nspark system (WIP, but very pretty)''')
-    elif cmd[1] == "clear":
-      print("Cleaning tmp...")
-      os.system(str('''cd /usr/.spark/tmp && sudo rm -r *'''))
-      print("Cleaned!")
-    elif cmd[1] == "system":
-      with open("/proc/cpuinfo", "r")  as f:
-        info = f.readlines()
-      cpuinfo = [x.strip().split(":")[1] for x in info if "model name"  in x]
-      with open("/proc/meminfo", "r") as f:
-          lines = f.readlines()
-      with open("/proc/loadavg", "r") as f:
-        load = f.read().strip()
-      print(str('''         _nnnn_
-        dGGGGMMb
-       @p~qp~~qMb            Arch:    '''+platform.architecture()[0]+'''
-       M|@||@) M|            Machine: '''+platform.machine()+'''
-       @,----.JM|            Node:    '''+platform.node()+'''
-      JS^\__/  qKL           System:  '''+platform.system()+'''
-     dZP        qKRb         CPU:     '''+str(cpuinfo[0])+'''
-    dZP          qKKb        Memory: 
-   fZP            SMMb          '''+str(lines[0].strip())+'''
-   HZM            MMMM          '''+str(lines[1].strip())+'''
-   FqM            MMMM       Load:    '''+str(load)+'''
- __| ".        |\dS"qML
- |    `.       | `' \Zq
-_)      \.___.,|     .'
-\____   )MMMMMP|   .'
-     `-'       `--' '''))
-    elif cmd[1] == "installed":
-      with open("/usr/.spark/packs/installed", "r") as f:
-        inst= f.readlines()
-      for elem in inst:
-        print(elem)
+    if var_val == None:
+      print("[2] could not get variable ["+str(var)+"]. It equals to None, is there a python problem?")
+      quit()
     else:
-      print("No such function!")
+      return var_val
+  
+  def update(self,var,*args):
+    """
+    Update a variable
+    :param var: variable to update
+    """
+    #update datajson
+    self.read(self.filename)
+    try:
+      self.datajson[str(var)] = str(args[0])
+    except Exception as e:
+      merrors.error("could not update variable, does it exist? Did you parse a new value? Python error: "+str(e))
+    jsonFile = open(str(self.filename), "w+")
+    jsonFile.write(json.dumps(self.datajson))
+    jsonFile.close()
+
+  def update_all(self):
+    """
+    Update all
+    """
+    jsonFile = open(str(self.filename), "w+")
+    jsonFile.write(json.dumps(self.datajson))
+    jsonFile.close()
+
+  def pretty(self):
+    """
+    Return pretty print
+    :return prettyprint:
+    """
+    #update datajson
+    self.read(self.filename)
+    try:
+      return json.dumps(self.datajson, indent=4, sort_keys=True)
+    except Exception as e:
+      merrors.error("could not pretty print, did you load the config? Python error: "+str(e))
+      quit()
+
+  def nested(self,main,name,var):
+    self.read(self.filename)
+    tmp = []
+    try:
+      old_nested = self.get(str(main))
+    except Exception as e:
+      merrors.error("could not create a nested value, does the main value exist? Python error: "+str(e))
+      quit()
+    for elem in old_nested:
+      tmp.append(elem)
+    tmp.append({str(name):str(var)})
+    self.datajson[str(main)] = tmp
+    file = open(str(self.filename), "w")
+    json.dump(self.datajson,file)
+    file.close()
+
+  def add(self,name,var):
+    file = open(str(self.filename), "w")
+    self.datajson[str(name)] = str(var)
+    json.dump(self.datajson,file)
+    file.close()
+
+# 
+# ==============================================
+#                     Spark
+# ==============================================
+#
+
+# Colours:
+reset = "\u001b[0m"
+valid = "\u001b[32m"
+fail  = "\u001b[31m"
+
+# Paths
+def dirs(sudo):
+  try: 
+    with open("/usr/spark/spark.check","r") as f:
+      f.read()
+      return 0
+  except:
+    if sudo:
+      os.system("sudo mkdir -p /usr/spark")
+      os.system("sudo mkdir -p /usr/spark/tmp")
+      os.system("sudo mkdir -p /usr/spark/packs && sudo touch /usr/spark/packs/installed && sudo touch /usr/spark/spark.check && sudo chmod 777 /usr/spark/packs/installed")
+      os.system("sudo mkdir -p /usr/spark/dimensions && sudo touch /usr/spark/dimensions/dimensions.config")
+    else:
+      os.system(" mkdir -p /usr/spark")
+      os.system(" mkdir -p /usr/spark/tmp")
+      os.system(" mkdir -p /usr/spark/packs &&  touch /usr/spark/packs/installed &&  touch /usr/spark/spark.check &&  chmod 777 /usr/spark/packs/installed")
+      os.system(" mkdir -p /usr/spark/dimensions &&  touch /usr/spark/dimensions/dimensions.config")
+    return 1
+
+# Help command
+def help():
+  print("""
+Spark - a simple package manager for IgniteOS
+
+Welcome to spark, the following package manager is in beta and will not work as intended until a stable release is finished.
+
+Usage:
+\t spark < -i / install > <package name> = Installs a package
+\t spark < -l / list > = Shows installed packages 
+\t spark < -d / dimensions > = Shows available dimensions
+\t spark < -p / purge > <package name> = Deletes the specified package
+""")
+
+# Get dimensions information
+def dim():
+  dimensions = ezconfig()
+  try:
+    exit_code = dimensions.read("/usr/spark/dimensions/dimensions.config")
+    if exit_code == 1:
+        with open("/usr/spark/dimensions/dimensions.config","w+") as f:
+          f.write("""{
+   "name":"dimensions_config",
+   "sources":[{
+      "name":"spark_official",
+      "url":"https://sparkofficial.ubuntulove2004.repl.co/",
+      "date":"",
+      "packs":[
+         "none"
+      ]
+   }]
+}""")
+        return "No dimensions set, fixing... "+valid+"fixed!"+reset
+    return 0
+  except Exception as e:
+    return e
+
+# Update dimensions information
+def up_dim():
+  dimensions = ezconfig()
+  try:
+    exit_code = dimensions.read("/usr/spark/dimensions/dimensions.config")
+    if exit_code == 1:
+      return 1
+    else:
+      for source in dimensions.get('sources'):
+        print("Updating "+source['name']+" on "+source['url']+"... ",end='')
+        try:
+          r = requests.get(source['url']+'/packs')
+          source['packs'] = r.json()
+          #print(source)
+          dimensions.update_all()
+          print(valid+"✔"+reset)
+        except Exception as e:
+          print("Failed to update ",source['name'],"reason:",e,fail+"\nPerhaps run as root?")
+          return 1
+      return 0
+  except Exception as e:
+    return e
+
+# Checks before install
+def run_checks():
+
+  print("Checking paths... ",end="")
+  exit_code = dirs(sudo)
+  if exit_code == 0:
+    print(valid+"✔"+reset)
+  else:
+    print(fail+"✕ - Created paths"+reset)
+
+  print("Checking dimensions... ",end="")
+  exit_code = dim()
+  if exit_code == 0:
+    print(valid+"✔"+reset)
+  else:
+    print("\nDimensions file not found? Please run: \n\tspark update\n")
+    print(fail+"✕ - "+str(exit_code)+reset)
+    quit()
+
+# Update
+def update():
+  print("Checking for dimensions file... ",end="")
+  exit_code = dim()
+  if exit_code == 0:
+    print(valid+"✔"+reset)
+  else:
+    print(fail+"✕ - "+str(exit_code)+reset)
+    quit()
+  print("Updating dimensions file... ")
+  exit_code = up_dim()
+  if exit_code == 0:
+    print(valid+"Updated All ✔"+reset)
+  else:
+    print(fail+"Failed to Update ✕"+reset)
+    quit()
+
+# Find package
+def find_pkg(name,dimensions):
+  for source in dimensions.get('sources'):
+    for pack in source['packs']:
+      if name == pack['name']:
+        return pack
+
+# Install
+def install(package):
+  print("Preparing to install",package,"..."+valid+"✔"+reset)
+  dimensions = ezconfig()
+  # check if it exists
+  print("Reading dimensions file... ",end="")
+  exit_code = dimensions.read("/usr/spark/dimensions/dimensions.config")
+  if exit_code == 0:
+    print(valid+"✔"+reset)
+  else:
+    print(fail+"✕ - "+str(exit_code)+reset)
+    quit()
+  pack = find_pkg(package,dimensions)
+  print(valid)
+  print("Name:",pack['name'])
+  print("Size:",pack['size'],"mb - upon installation")
+  print("Depends on:",pack['depends'])
+  print(reset)
+  inp = input("Install? [y/n] ")
+  if inp == "y" or inp == "Y":
+    if pack['depends'] == "none":
+      deps = None
+    else:
+      for dep in pack['depends']:
+        print(dep)
+        dpack = find_pkg(dep,dimensions)
+        get_src(dpack['url'],dep)
+        unpack(dep)
+        build(dep,dpack['build'])
+        input()
+    get_src(pack['url'],pack['name'])
+    unpack(pack['name'])
+    build(pack['name'],pack['build'])
+
+# Get package source
+def get_src(uri,packname):
+  print("Downloading source from ",uri,"...")
+  os.system("cd /usr/spark/tmp && wget -q "+uri)
+
+def unpack(packname):
+  os.system("cd /usr/spark/tmp && tar xf "+packname+"* && ls") 
+
+def build(packname,buildinst):
+  os.system("cd /usr/spark/tmp/"+packname+"* && "+buildinst) 
+
+
+def main(*argv): 
+  # Check arguments
+  argv=argv[0]
+  global sudo
+  if "--no-sudo" in argv:
+    sudo = False
+  else:
+    sudo = True
+  if "-h" in argv or "help" in argv:
+    help()
+  elif "-i" in argv or "install" in argv:
+    run_checks()
+    install(argv[-1])
+  elif "-u" in argv or "update" in argv:
+    update()
+
+    
+
+
 if __name__ == "__main__":
-   main(sys.argv)
+ main(sys.argv)
 
