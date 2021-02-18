@@ -283,9 +283,17 @@ def install(package):
     if pack['depends'] == "none":
       deps = None
     else:
-      for dep in pack['depends']:
+      deps = []
+      predeps = pack['depends']
+      while True:
+        for dep in predeps:
+          tempdep = find_pkg(package,dimensions)
+          if tempdep['depends'] != "none":
+            predeps.append(tempdep['depends'])
+        break
+      print(predeps)
+      for dep in deps:
         print(dep)
-        dpack = find_pkg(dep,dimensions)
         get_src(dpack['url'],dep)
         unpack(dep)
         build(dep,dpack['build'])
@@ -297,7 +305,8 @@ def install(package):
 # Get package source
 def get_src(uri,packname):
   print("Downloading source from ",uri,"...")
-  os.system("cd /usr/spark/tmp && wget -q "+uri)
+  os.system("cd /usr/spark/tmp && rm -r "+packname+"*")
+  os.system("cd /usr/spark/tmp && wget -q"+uri)
 
 def unpack(packname):
   os.system("cd /usr/spark/tmp && tar xf "+packname+"* && ls") 
