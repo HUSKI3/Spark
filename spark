@@ -219,7 +219,6 @@ def up_dim():
 
 # Checks before install
 def run_checks():
-
   print("Checking paths... ",end="")
   exit_code = dirs(sudo)
   if exit_code == 0:
@@ -273,31 +272,38 @@ def install(package):
     print(fail+"✕ - "+str(exit_code)+reset)
     quit()
   pack = find_pkg(package,dimensions)
+  if pack['depends'] == "none":
+      deps = None
+  else:
+    deps = []
+    predeps = pack['depends']
+    for dep in predeps:
+      #print("dep in predeps 1 loop:",dep)
+      tempdep = find_pkg(dep,dimensions)
+      if tempdep['depends'] != "none":
+        if type(tempdep['depends']) is str:
+          predeps.append(tempdep['depends'])
+        elif type(tempdep['depends']) is list:
+          for dep in tempdep['depends']:
+            print(dep)
+            predeps.append(dep)
   print(valid)
   print("Name:",pack['name'])
   print("Size:",pack['size'],"mb - upon installation")
-  print("Depends on:",pack['depends'])
+  print("Depends on:",predeps)
   print(reset)
   inp = input("Install? [y/n] ")
   if inp == "y" or inp == "Y":
-    if pack['depends'] == "none":
-      deps = None
-    else:
-      deps = []
-      predeps = pack['depends']
-      while True:
-        for dep in predeps:
-          tempdep = find_pkg(package,dimensions)
-          if tempdep['depends'] != "none":
-            predeps.append(tempdep['depends'])
-        break
-      print(predeps)
-      for dep in deps:
-        print(dep)
+    if pack['depends'] != "none":
+      predeps.reverse()
+      for dep in predeps:
+        #print("dep in predep 2 loop:",dep)
+        dpack = find_pkg(dep,dimensions)
         get_src(dpack['url'],dep)
         unpack(dep)
         build(dep,dpack['build'])
-        input()
+        print(dep,dpack)
+        #input()
     get_src(pack['url'],pack['name'])
     unpack(pack['name'])
     build(pack['name'],pack['build'])
@@ -306,7 +312,7 @@ def install(package):
 def get_src(uri,packname):
   print("Downloading source from ",uri,"...")
   os.system("cd /usr/spark/tmp && rm -r "+packname+"*")
-  os.system("cd /usr/spark/tmp && wget -q"+uri)
+  os.system("cd /usr/spark/tmp && wget -q "+uri)
 
 def unpack(packname):
   os.system("cd /usr/spark/tmp && tar xf "+packname+"* && ls") 
@@ -314,6 +320,16 @@ def unpack(packname):
 def build(packname,buildinst):
   os.system("cd /usr/spark/tmp/"+packname+"* && "+buildinst) 
 
+def add_dimension(url):
+  dimensions = ezconfig()
+  print("Contacting source... ",end='')
+  r = requests.get(url+'/')
+  print(valid+"✔"+reset)
+  dimensions.read("/usr/spark/dimensions/dimensions.config")
+  print("Saving source... ",end='')
+  dimensions.datajson['sources'].append(r.json())
+  dimensions.update_all()
+  print(valid+"✔"+reset)
 
 def main(*argv): 
   # Check arguments
@@ -330,9 +346,14 @@ def main(*argv):
     install(argv[-1])
   elif "-u" in argv or "update" in argv:
     update()
-
-    
-
+  elif "-d" in argv or "dimension" in argv:
+    run_checks()
+    add_dimension(argv[-1])
+    update()
+  elif "-c" in argv or "clean" in argv:
+    run_checks()
+    os.system("cd /usr/spark/tmp && rm -r *")
+    update()
 
 if __name__ == "__main__":
  main(sys.argv)
