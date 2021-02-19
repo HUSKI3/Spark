@@ -168,7 +168,7 @@ Usage:
 \t spark < -i / install > <package name> = Installs a package
 \t spark < -l / list > = Shows installed packages 
 \t spark < -d / dimensions > = Shows available dimensions
-\t spark < -p / purge > <package name> = Deletes the specified package
+\t spark < -u / update > <package name> = Updates sources
 """)
 
 # Get dimensions information
