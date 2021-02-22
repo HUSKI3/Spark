@@ -129,6 +129,90 @@ class ezconfig:
 
 # 
 # ==============================================
+#                     Styling
+# ==============================================
+#
+
+# Setup path and style_file
+src = os.path.dirname("~/.config/spark/")
+style_file = os.path.join(src, 'style')
+rc_file = os.path.join(src, 'sparkrc')
+
+# Setup ezconf
+global style
+style = ezconfig()
+style.read(os.path.expanduser(style_file))
+
+# Colours
+RESET = '\033[0m'
+def get_color(tuple, background=False):
+        r,g,b = tuple
+        return '\033[{};2;{};{};{}m'.format(48 if background else 38, r, g, b)
+
+def hex_to_rgb(hex):
+        hex = hex.replace('#', '')
+        return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
+
+# Questions
+questions = [
+    {
+        'type': 'confirm',
+        'message': 'Welcome to Spark\nOpen style defined in ~/.tik/style?',
+        'name': 'continue',
+        'default': True,
+    },
+]
+
+# Styled text
+def sprint(x):
+        col = get_color(hex_to_rgb(style.get("text")))
+        print(col+str(x)+RESET)
+
+# Frames
+class Frame:
+	def __init__(self,text=None,title=None,foot=None):
+		self.text = text
+		self.title = title
+		self.foot = foot
+
+	def print(self):
+		x = self.text.split(sep="\n")
+		lon = max(x, key=len)
+		if self.title:
+			if len(lon) < len(self.title):
+				lon = self.title
+		col = get_color(hex_to_rgb(style.get("frame")))
+		print(col+"┏",end="")
+		z = 0
+		while z != len(str(lon))+2:
+			print("━",end="")
+			z+=1
+		print("┓")
+		if self.title:
+			print("┃",end="")
+			print(get_color(hex_to_rgb(style.get("title")))+" "+self.title,end="")
+			print(col+(" "*(len(str(lon))-len(str(self.title))))+" "*1+"┃")
+		print("┣",end="")
+		z=0
+		while z != len(str(lon))+2:
+			print("━",end="")
+			z+=1
+		print("┫")
+		for elem in x:
+			print("┃",end="")
+			print(get_color(hex_to_rgb(style.get("text"))),elem,end="")
+			print(col+(" "*(len(str(lon))-len(str(elem))+1))+"┃")
+		print("┗",end="")
+		z = 0
+		while z != len(str(lon))+2:
+			print("━",end="")
+			z+=1
+		print("┛")
+		print(RESET)
+
+
+#
+# ==============================================
 #                     Spark
 # ==============================================
 #
@@ -274,6 +358,7 @@ def install(package):
   pack = find_pkg(package,dimensions)
   if pack['depends'] == "none":
       deps = None
+      predeps = "none"
   else:
     deps = []
     predeps = pack['depends']
@@ -320,6 +405,14 @@ def unpack(packname):
 def build(packname,buildinst):
   os.system("cd /usr/spark/tmp/"+packname+"* && "+buildinst) 
 
+def list_packs():
+  dimensions = ezconfig()
+  dimensions.read("/usr/spark/dimensions/dimensions.config")
+  for source in dimensions.datajson['sources']:
+    print(fail+source['name']+reset,"has:")
+    for pack in source['packs']:
+      print(pack['name'],"version",pack['version'])
+
 def add_dimension(url):
   dimensions = ezconfig()
   print("Contacting source... ",end='')
@@ -350,10 +443,30 @@ def main(*argv):
     run_checks()
     add_dimension(argv[-1])
     update()
+  elif "-l" in argv or "list" in argv:
+    list_packs()
   elif "-c" in argv or "clean" in argv:
     run_checks()
     os.system("cd /usr/spark/tmp && rm -r *")
     update()
+  else:
+    frame = Frame()
+    frame.title="Spark - a simple package manager"
+    frame.text="Options:\n"
+    frame.text+="1. Install package\n"
+    frame.text+="2. List packages\n"
+    os.system("clear")
+    frame.print()
+    inp = input(get_color(hex_to_rgb(style.get("query")))+" > ")
+    if int(inp) == 1:
+      inp = input(get_color(hex_to_rgb(style.get("query")))+"Package name > ")
+      run_checks()
+      os.system("clear")
+      install(inp)
+    elif int(inp) == 2:
+      print(reset+valid)
+      list_packs()
+      print(reset)
 
 if __name__ == "__main__":
  main(sys.argv)
