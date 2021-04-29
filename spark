@@ -250,9 +250,10 @@ Welcome to spark, the following package manager is in beta and will not work as 
 
 Usage:
 \t spark < -i / install > <package name> = Installs a package
-\t spark < -l / list > = Shows installed packages 
+\t spark < -l / list > = Shows installed packages
 \t spark < -d / dimensions > = Shows available dimensions
 \t spark < -u / update > <package name> = Updates sources
+\t spark < -ls / list-sources > = Shows available sources
 """)
 
 # Get dimensions information
@@ -413,6 +414,12 @@ def list_packs():
     for pack in source['packs']:
       print(pack['name'],"version",pack['version'])
 
+def list_sources():
+  dimensions = ezconfig()
+  dimensions.read("/usr/spark/dimensions/dimensions.config")
+  for source in dimensions.datajson['sources']:
+    print(valid+source['name']+reset)
+
 def add_dimension(url):
   dimensions = ezconfig()
   print("Contacting source... ",end='')
@@ -449,6 +456,9 @@ def main(*argv):
     run_checks()
     os.system("cd /usr/spark/tmp && rm -r *")
     update()
+  elif "-ls" in argv or "list-sources" in argv:
+    run_checks()
+    list_sources()
   else:
     frame = Frame()
     frame.title="Spark - a simple package manager"
@@ -467,6 +477,7 @@ def main(*argv):
       print(reset+valid)
       list_packs()
       print(reset)
+
 
 if __name__ == "__main__":
  main(sys.argv)
