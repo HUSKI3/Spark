@@ -1,5 +1,5 @@
 # Spark
-Spark is a simple and easy to use package manager for linux, it is created on a complex system of pipes and universes to manage versions of packages and distributions it can download them on.
+Spark is a simple "build from source" package installer.
 ## Supported platforms
 - Any linux distro*
 - IPhone (ISH and native)
