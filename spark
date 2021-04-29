@@ -460,24 +460,26 @@ def main(*argv):
     run_checks()
     list_sources()
   else:
-    frame = Frame()
-    frame.title="Spark - a simple package manager"
-    frame.text="Options:\n"
-    frame.text+="1. Install package\n"
-    frame.text+="2. List packages\n"
-    os.system("clear")
-    frame.print()
-    inp = input(get_color(hex_to_rgb(style.get("query")))+" > ")
-    if int(inp) == 1:
-      inp = input(get_color(hex_to_rgb(style.get("query")))+"Package name > ")
-      run_checks()
+    try:
+      frame = Frame()
+      frame.title="Spark - a simple package manager"
+      frame.text="Options:\n"
+      frame.text+="1. Install package\n"
+      frame.text+="2. List packages\n"
       os.system("clear")
-      install(inp)
-    elif int(inp) == 2:
-      print(reset+valid)
-      list_packs()
-      print(reset)
-
+      frame.print()
+      inp = input(get_color(hex_to_rgb(style.get("query")))+" > ")
+      if int(inp) == 1:
+        inp = input(get_color(hex_to_rgb(style.get("query")))+"Package name > ")
+        run_checks()
+        os.system("clear")
+        install(inp)
+      elif int(inp) == 2:
+        print(reset+valid)
+        list_packs()
+        print(reset)
+    except:
+      print("Failed to load GUI-like, run 'spark help' as root for help")
 
 if __name__ == "__main__":
  main(sys.argv)
