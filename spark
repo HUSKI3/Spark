@@ -445,6 +445,7 @@ def main(*argv):
     run_checks()
     install(argv[-1])
   elif "-u" in argv or "update" in argv:
+    run_checks()
     update()
   elif "-d" in argv or "dimension" in argv:
     run_checks()
