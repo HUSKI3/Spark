@@ -418,6 +418,18 @@ def list_packs():
     for pack in source['packs']:
       print(pack['name'],"version",pack['version'])
 
+def get_version(name):
+  dimensions = ezconfig()
+  dimensions.read("/usr/spark/dimensions/dimensions.config")
+  for source in dimensions.datajson['sources']:
+    print(fail+source['name']+reset,"has:")
+    for pack in source['packs']:
+      if pack['name'] == name:
+        return pack['version']
+      else:
+        print(pack['name'],name,"no match")
+
+
 def list_sources():
   dimensions = ezconfig()
   dimensions.read("/usr/spark/dimensions/dimensions.config")
@@ -436,7 +448,17 @@ def add_dimension(url):
   print(valid+"✔"+reset)
 
 def add_installed(name):
+  dimensions = ezconfig()
+  # check if it exists
+  print("Reading dimensions file... ",end="")
+  exit_code = dimensions.read("/usr/spark/dimensions/dimensions.config")
+  if exit_code == 0:
+    print(valid+"✔"+reset)
+  else:
+    print(fail+"✕ - "+str(exit_code)+reset)
+    quit()
   installed = ezconfig()
+  pack = find_pkg(name,dimensions)
   try:
     exit_code = installed.read("/usr/spark/installed.json")
     if exit_code == 1:
@@ -447,22 +469,27 @@ def add_installed(name):
           f.write("""
             {
             "packages":
-            [
-              {
-              "name":"spark",
+            {
+              "spark":{
               "version":"0.0.0",
               "source":"github.com/HUSKI3/Spark",
-              "author":"HUSKI3",
-              "depends":"none"
-              }
-            ]
+              "depends":"none"}
+              
             }
+}
             """)
   except Exception as e:
     print(e)
     quit()
-    packs = installed.get("packs")
-    packs[name] = "Test"
+  packs = installed.get("packages")
+  print(packs)
+  packs[name] ={
+    "version":pack['version'],
+    "source":pack['url'],
+    "depends":pack['depends']
+  }
+  print(packs)
+  installed.update_all()
 
 def main(*argv): 
   # Check arguments
@@ -476,8 +503,8 @@ def main(*argv):
     help()
   elif "-i" in argv or "install" in argv:
     run_checks()
-    install(argv[-1])
     add_installed(argv[-1])
+    install(argv[-1])
   elif "-u" in argv or "update" in argv:
     run_checks()
     update()
