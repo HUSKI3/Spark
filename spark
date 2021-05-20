@@ -462,7 +462,7 @@ def add_installed(name):
     print(e)
     quit()
     packs = installed.get("packs")
-    packs[name] = 
+    packs[name] = "Test"
 
 def main(*argv): 
   # Check arguments
