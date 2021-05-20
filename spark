@@ -343,6 +343,7 @@ def find_pkg(name,dimensions):
     for pack in source['packs']:
       if name == pack['name']:
         return pack
+  return None
 
 # Install
 def install(package):
@@ -357,6 +358,9 @@ def install(package):
     print(fail+"✕ - "+str(exit_code)+reset)
     quit()
   pack = find_pkg(package,dimensions)
+  if pack == None:
+    print("No candidates with the name",package)
+    quit()
   if pack['depends'] == "none":
       deps = None
       predeps = "none"
@@ -431,6 +435,35 @@ def add_dimension(url):
   dimensions.update_all()
   print(valid+"✔"+reset)
 
+def add_installed(name):
+  installed = ezconfig()
+  try:
+    exit_code = installed.read("/usr/spark/installed.json")
+    if exit_code == 1:
+      "First install?"
+      print("This is your first package installed using spark!")
+      print("No installed file, fixing... "+valid+"fixed!"+reset)
+      with open("/usr/spark/installed.json","w+") as f:
+          f.write("""
+            {
+            "packages":
+            [
+              {
+              "name":"spark",
+              "version":"0.0.0",
+              "source":"github.com/HUSKI3/Spark",
+              "author":"HUSKI3",
+              "depends":"none"
+              }
+            ]
+            }
+            """)
+  except Exception as e:
+    print(e)
+    quit()
+    packs = installed.get("packs")
+    packs[name] = 
+
 def main(*argv): 
   # Check arguments
   argv=argv[0]
@@ -444,6 +477,7 @@ def main(*argv):
   elif "-i" in argv or "install" in argv:
     run_checks()
     install(argv[-1])
+    add_installed(argv[-1])
   elif "-u" in argv or "update" in argv:
     run_checks()
     update()
@@ -461,26 +495,7 @@ def main(*argv):
     run_checks()
     list_sources()
   else:
-    try:
-      frame = Frame()
-      frame.title="Spark - a simple package manager"
-      frame.text="Options:\n"
-      frame.text+="1. Install package\n"
-      frame.text+="2. List packages\n"
-      os.system("clear")
-      frame.print()
-      inp = input(get_color(hex_to_rgb(style.get("query")))+" > ")
-      if int(inp) == 1:
-        inp = input(get_color(hex_to_rgb(style.get("query")))+"Package name > ")
-        run_checks()
-        os.system("clear")
-        install(inp)
-      elif int(inp) == 2:
-        print(reset+valid)
-        list_packs()
-        print(reset)
-    except:
-      print("Failed to load GUI-like, run 'spark help' as root for help")
+    help()
 
 if __name__ == "__main__":
  main(sys.argv)
