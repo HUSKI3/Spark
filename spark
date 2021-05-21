@@ -347,7 +347,6 @@ def find_pkg(name,dimensions):
 
 # Install
 def install(package):
-  print("Preparing to install",package,"..."+valid+"✔"+reset)
   dimensions = ezconfig()
   # check if it exists
   print("Reading dimensions file... ",end="")
@@ -357,6 +356,18 @@ def install(package):
   else:
     print(fail+"✕ - "+str(exit_code)+reset)
     quit()
+  print("Checking if package is installed... "+valid+"✔"+reset)
+  if check_installed(package):
+    pack = find_pkg(package,dimensions)
+    if pack['version'] != get_installed_version(package)['version']:
+      print("Package is installed but a new version is available")
+    elif pack['version'] == get_installed_version(package)['version']:
+      print("Package is already installed at the version",get_installed_version(package)['version'])
+      print("Repo latest is",pack['version'])
+      quit()
+    else:
+      print("Package is installed to the latest recommended version")
+  print("Preparing to install",package,"..."+valid+"✔"+reset)
   pack = find_pkg(package,dimensions)
   if pack == None:
     print("No candidates with the name",package)
@@ -397,6 +408,9 @@ def install(package):
     get_src(pack['url'],pack['name'])
     unpack(pack['name'])
     build(pack['name'],pack['build'])
+
+    return True
+  return False
 
 # Get package source
 def get_src(uri,packname):
@@ -482,14 +496,51 @@ def add_installed(name):
     print(e)
     quit()
   packs = installed.get("packages")
-  print(packs)
+  #print(packs)
   packs[name] ={
     "version":pack['version'],
     "source":pack['url'],
     "depends":pack['depends']
   }
-  print(packs)
+  #print(packs)
   installed.update_all()
+
+def list_installed():
+  print("Reading... ",end="")
+  installed = ezconfig()
+  exit_code = installed.read("/usr/spark/installed.json")
+  if exit_code == 0:
+    print(valid+"✔"+reset)
+  else:
+    print(fail+"✕ - "+str(exit_code)+reset)
+    quit()
+  #print(installed.get('packages'))
+  for package in installed.get('packages'):
+    # weird
+    pkg = installed.get('packages')[package]
+    #print(pkg)
+    print(package,"at",pkg['version'])
+  print("Shard is required to update packages!")
+
+def get_installed_version(name):
+  installed = ezconfig()
+  exit_code = installed.read("/usr/spark/installed.json")
+  #print(installed.get('packages'))
+  for package in installed.get('packages'):
+    if package == name:
+      pkg = installed.get('packages')[package]
+      return pkg
+  return None
+    
+  
+def check_installed(name):
+  installed = ezconfig()
+  exit_code = installed.read("/usr/spark/installed.json")
+  #print(installed.get('packages'))
+  for package in installed.get('packages'):
+    if name == package:
+      return True
+  return False
 
 def main(*argv): 
   # Check arguments
@@ -503,8 +554,10 @@ def main(*argv):
     help()
   elif "-i" in argv or "install" in argv:
     run_checks()
-    add_installed(argv[-1])
-    install(argv[-1])
+    if install(argv[-1]):
+      add_installed(argv[-1])
+  elif "-ci" in argv or "installed" in argv:
+    list_installed()
   elif "-u" in argv or "update" in argv:
     run_checks()
     update()
@@ -526,4 +579,3 @@ def main(*argv):
 
 if __name__ == "__main__":
  main(sys.argv)
-
