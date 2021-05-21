@@ -7,6 +7,7 @@ import tarfile
 import subprocess
 import platform
 import requests
+from pathlib import Path
 
 # 
 # ==============================================
@@ -153,64 +154,6 @@ def hex_to_rgb(hex):
         hex = hex.replace('#', '')
         return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
 
-# Questions
-questions = [
-    {
-        'type': 'confirm',
-        'message': 'Welcome to Spark\nOpen style defined in ~/.tik/style?',
-        'name': 'continue',
-        'default': True,
-    },
-]
-
-# Styled text
-def sprint(x):
-        col = get_color(hex_to_rgb(style.get("text")))
-        print(col+str(x)+RESET)
-
-# Frames
-class Frame:
-	def __init__(self,text=None,title=None,foot=None):
-		self.text = text
-		self.title = title
-		self.foot = foot
-
-	def print(self):
-		x = self.text.split(sep="\n")
-		lon = max(x, key=len)
-		if self.title:
-			if len(lon) < len(self.title):
-				lon = self.title
-		col = get_color(hex_to_rgb(style.get("frame")))
-		print(col+"┏",end="")
-		z = 0
-		while z != len(str(lon))+2:
-			print("━",end="")
-			z+=1
-		print("┓")
-		if self.title:
-			print("┃",end="")
-			print(get_color(hex_to_rgb(style.get("title")))+" "+self.title,end="")
-			print(col+(" "*(len(str(lon))-len(str(self.title))))+" "*1+"┃")
-		print("┣",end="")
-		z=0
-		while z != len(str(lon))+2:
-			print("━",end="")
-			z+=1
-		print("┫")
-		for elem in x:
-			print("┃",end="")
-			print(get_color(hex_to_rgb(style.get("text"))),elem,end="")
-			print(col+(" "*(len(str(lon))-len(str(elem))+1))+"┃")
-		print("┗",end="")
-		z = 0
-		while z != len(str(lon))+2:
-			print("━",end="")
-			z+=1
-		print("┛")
-		print(RESET)
-
-
 #
 # ==============================================
 #                     Spark
@@ -234,11 +177,13 @@ def dirs(sudo):
       os.system("sudo mkdir -p /usr/spark/tmp")
       os.system("sudo mkdir -p /usr/spark/packs && sudo touch /usr/spark/packs/installed && sudo touch /usr/spark/spark.check && sudo chmod 777 /usr/spark/packs/installed")
       os.system("sudo mkdir -p /usr/spark/dimensions && sudo touch /usr/spark/dimensions/dimensions.config")
+      os.system("sudo mkdir -p /usr/spark/installed/_local")
     else:
       os.system(" mkdir -p /usr/spark")
       os.system(" mkdir -p /usr/spark/tmp")
       os.system(" mkdir -p /usr/spark/packs &&  touch /usr/spark/packs/installed &&  touch /usr/spark/spark.check &&  chmod 777 /usr/spark/packs/installed")
       os.system(" mkdir -p /usr/spark/dimensions &&  touch /usr/spark/dimensions/dimensions.config")
+      os.system(" mkdir -p /usr/spark/installed/_local")
     return 1
 
 # Help command
@@ -251,9 +196,10 @@ Welcome to spark, the following package manager is in beta and will not work as 
 Usage:
 \t spark < -i / install > <package name> = Installs a package
 \t spark < -l / list > = Shows installed packages
-\t spark < -d / dimensions > = Shows available dimensions
+\t spark < -d / dimension > = Adds dimension
 \t spark < -u / update > <package name> = Updates sources
 \t spark < -ls / list-sources > = Shows available sources
+\t spark < -ci / installed > = Shows intalled packages
 """)
 
 # Get dimensions information
@@ -346,7 +292,7 @@ def find_pkg(name,dimensions):
   return None
 
 # Install
-def install(package):
+def install(package,force=False):
   dimensions = ezconfig()
   # check if it exists
   print("Reading dimensions file... ",end="")
@@ -357,16 +303,19 @@ def install(package):
     print(fail+"✕ - "+str(exit_code)+reset)
     quit()
   print("Checking if package is installed... "+valid+"✔"+reset)
-  if check_installed(package):
-    pack = find_pkg(package,dimensions)
-    if pack['version'] != get_installed_version(package)['version']:
-      print("Package is installed but a new version is available")
-    elif pack['version'] == get_installed_version(package)['version']:
-      print("Package is already installed at the version",get_installed_version(package)['version'])
-      print("Repo latest is",pack['version'])
-      quit()
-    else:
-      print("Package is installed to the latest recommended version")
+  #print(get_local_version(package))
+  #nput()
+  if not force:
+    if check_installed(package):
+      pack = find_pkg(package,dimensions)
+      if pack['version'] != get_installed_version(package):
+        print("Package is installed but a new version is available")
+      elif pack['version'] == get_installed_version(package):
+        print("Package is already installed at the version",get_installed_version(package))
+        print("Repo latest is",pack['version'])
+        quit()
+      else:
+        print("Package is installed to the latest recommended version")
   print("Preparing to install",package,"..."+valid+"✔"+reset)
   pack = find_pkg(package,dimensions)
   if pack == None:
@@ -390,6 +339,10 @@ def install(package):
             predeps.append(dep)
   print(valid)
   print("Name:",pack['name'])
+  if get_local_version(pack['name']) != False:
+    print("Version:",pack['version'],"({} is installed)".format(get_local_version(pack['name'])))
+  else:
+    print("Version:",pack['version'])
   print("Size:",pack['size'],"mb - upon installation")
   print("Depends on:",predeps)
   print(reset)
@@ -399,18 +352,84 @@ def install(package):
       predeps.reverse()
       for dep in predeps:
         #print("dep in predep 2 loop:",dep)
-        dpack = find_pkg(dep,dimensions)
-        get_src(dpack['url'],dep)
-        unpack(dep)
-        build(dep,dpack['build'])
-        print(dep,dpack)
-        #input()
+        if check_installed(dep) and not force:
+          print("installed already")
+        else:
+          dpack = find_pkg(dep,dimensions)
+          get_src(dpack['url'],dep)
+          unpack(dep)
+          build(dep,dpack['build'])
+          print(dep,dpack)
+          add_installed(dpack['name'])
+          #input()
     get_src(pack['url'],pack['name'])
     unpack(pack['name'])
     build(pack['name'],pack['build'])
 
     return True
   return False
+
+# Uninstall
+def uninstall(package,force=False):
+  installed = ezconfig()
+  installed.read("/usr/spark/installed.json")
+  ver = None
+  for pack in installed.get('packages'):
+    if pack == package:
+      ver = installed.get('packages')[package]['version']
+      print("Found",package,"version",ver," "+valid+"✔"+reset)
+      print("Locating in ~/.local/_dist/"+package,end="... ")
+      ver_found = True
+  if ver == None:
+    print("Failed to locate package",end=" ")
+    ver_found = False
+  #print('~/.local/_dist/'+package)
+  # if test -d ~/.local/_dist/emacs; then echo "exist"; fi 
+  #a=  os.popen('whoami').read()
+  #print(a)
+  #os.system('whoami')
+  if "y" in os.popen(f'if test -d ~/.local/_dist/{package}; then echo "y"; fi ').read():
+    print(valid+"✔"+reset)
+    # Fuckery here
+    '''
+    cd $HOME/.local
+    for file in $(tar tzf package.tgz | grep -v '/$'); do
+        rm -f "$file"
+    done
+    '''
+    #os.system("cd /root/.local/_dist/"+package+"/ && ls")
+    txt = glob.glob("/root/.local/_dist/"+package+"/*.tar*")
+    for tar in txt:
+      os.system("rm -rf "+tar)
+    path_dir = glob.glob("/root/.local/_dist/"+package+"/"+package+"*")[0]
+    #print(path_dir)
+    #quit()
+    make_dir = glob.glob(path_dir+"/Makefile*")[0]
+    #print(make_dir)
+    with open(make_dir) as file:
+      make = file.read()
+      if "uninstall" in make:
+        #print("Makefile has uninstall!")
+        c = input("Uninstall? [Y/N] ")
+        if c == "y" or c == "Y":
+          os.system("cd "+path_dir+" && make uninstall")
+          return True
+        else:
+          return False
+  else:
+    print(fail+"✕"+reset)
+    if ver_found:
+      print(fail+"Package is installed but the source path is missing!"+reset)
+      print("If you manually removed the package,\nwould you like to remove it's entry?")
+      c = input("Remove? [Y/N] ")
+      if c == "Y" or c == "y":
+        return True
+      else:
+        return False
+    else:
+      print(fail+"Package is not installed!"+reset)
+    quit()
+  
 
 # Get package source
 def get_src(uri,packname):
@@ -420,9 +439,13 @@ def get_src(uri,packname):
 
 def unpack(packname):
   os.system("cd /usr/spark/tmp && tar xf "+packname+"* && ls") 
+  os.system("mkdir ~/.local/_dist")
+  os.system("mkdir ~/.local/_dist/"+packname) 
 
 def build(packname,buildinst):
   os.system("cd /usr/spark/tmp/"+packname+"* && "+buildinst) 
+  # cd /usr/spark/tmp && sudo cp -r emacs* ~/.local/_dist/emacs
+  os.system("cd /usr/spark/tmp && cp -r "+packname+"* ~/.local/_dist/"+packname)
 
 def list_packs():
   dimensions = ezconfig()
@@ -436,12 +459,25 @@ def get_version(name):
   dimensions = ezconfig()
   dimensions.read("/usr/spark/dimensions/dimensions.config")
   for source in dimensions.datajson['sources']:
-    print(fail+source['name']+reset,"has:")
+    #print(fail+source['name']+reset,"has:")
     for pack in source['packs']:
       if pack['name'] == name:
         return pack['version']
       else:
-        print(pack['name'],name,"no match")
+        #print(pack['name'],name,"no match")
+        continue
+  return False
+
+def get_local_version(name):
+  installed = ezconfig()
+  installed.read("/usr/spark/installed.json")
+  for pack in installed.get('packages'):
+    if pack == name:
+      return installed.get('packages')[pack]['version']
+    else:
+      #print(pack['name'],name,"no match")
+      continue
+  return False
 
 
 def list_sources():
@@ -505,8 +541,34 @@ def add_installed(name):
   #print(packs)
   installed.update_all()
 
+def remove_installed(name):
+  dimensions = ezconfig()
+  # check if it exists
+  print("Reading dimensions file... ",end="")
+  exit_code = dimensions.read("/usr/spark/dimensions/dimensions.config")
+  if exit_code == 0:
+    print(valid+"✔"+reset)
+  else:
+    print(fail+"✕ - "+str(exit_code)+reset)
+    quit()
+  installed = ezconfig()
+  pack = find_pkg(name,dimensions)
+  try:
+    exit_code = installed.read("/usr/spark/installed.json")
+    if exit_code == 1:
+      "First install?"
+      print("No packages are installed.")
+  except Exception as e:
+    print(e)
+    quit()
+  packs = installed.get("packages")
+  del packs[name]
+  installed.update_all()
+  print("Removed! "+valid+"✔"+reset)
+
 def list_installed():
   print("Reading... ",end="")
+  update_avail = False
   installed = ezconfig()
   exit_code = installed.read("/usr/spark/installed.json")
   if exit_code == 0:
@@ -519,16 +581,23 @@ def list_installed():
     # weird
     pkg = installed.get('packages')[package]
     #print(pkg)
-    print(package,"at",pkg['version'])
-  print("Shard is required to update packages!")
+    if pkg['version'] != get_version(package) and get_version(package) != False:
+      print(valid+"[UPDATE]"+reset,package,"at",pkg['version']+", an update is available to",get_version(package))
+      update_avail = True
+    else:
+      print(package,"at",pkg['version'])
+  if update_avail:
+    print("Shard is required to update packages!")
 
 def get_installed_version(name):
   installed = ezconfig()
   exit_code = installed.read("/usr/spark/installed.json")
-  #print(installed.get('packages'))
-  for package in installed.get('packages'):
+  #print(installed.datajson['packages'][name])
+  for package in installed.datajson['packages'][name]:
     if package == name:
       pkg = installed.get('packages')[package]
+      #print(pkg)
+      #quit()
       return pkg
   return None
     
@@ -553,9 +622,14 @@ def main(*argv):
   if "-h" in argv or "help" in argv:
     help()
   elif "-i" in argv or "install" in argv:
-    run_checks()
-    if install(argv[-1]):
-      add_installed(argv[-1])
+    if "-r" in argv:
+      run_checks()
+      if install(argv[-1], force=True):
+        add_installed(argv[-1])
+    else:
+      run_checks()
+      if install(argv[-1]):
+        add_installed(argv[-1])
   elif "-ci" in argv or "installed" in argv:
     list_installed()
   elif "-u" in argv or "update" in argv:
@@ -567,6 +641,10 @@ def main(*argv):
     update()
   elif "-l" in argv or "list" in argv:
     list_packs()
+  elif "-un" in argv or "uninstall" in argv:
+    run_checks()
+    if uninstall(argv[-1]):
+      remove_installed(argv[-1])
   elif "-c" in argv or "clean" in argv:
     run_checks()
     os.system("cd /usr/spark/tmp && rm -r *")
