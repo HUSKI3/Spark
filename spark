@@ -318,10 +318,10 @@ def install(package,force=False):
   if not force:
     if check_installed(package):
       pack = find_pkg(package,dimensions)
-      if pack['version'] != get_installed_version(package):
+      if str(pack['version']) != str(get_local_version(package)):
         print("Package is installed but a new version is available")
-      elif pack['version'] == get_installed_version(package):
-        print("Package is already installed at the version",get_installed_version(package))
+      elif str(pack['version']) == str(get_local_version(package)):
+        print("Package is already installed at the version",get_local_version(package))
         print("Repo latest is",pack['version'])
         quit()
       else:
