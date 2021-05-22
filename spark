@@ -226,7 +226,7 @@ def dim():
     return e
 
 # Update dimensions information
-def up_dim():
+def up_dim(silent=False):
   dimensions = ezconfig()
   try:
     exit_code = dimensions.read("/usr/spark/dimensions/dimensions.config")
@@ -234,13 +234,15 @@ def up_dim():
       return 1
     else:
       for source in dimensions.get('sources'):
-        print("Updating "+source['name']+" on "+source['url']+"... ",end='')
+        if not silent:
+          print("Updating "+source['name']+" on "+source['url']+"... ",end='')
         try:
           r = requests.get(source['url']+'/packs')
           source['packs'] = r.json()
           #print(source)
           dimensions.update_all()
-          print(valid+"✔"+reset)
+          if not silent:
+            print(valid+"✔"+reset)
         except Exception as e:
           print("Failed to update ",source['name'],"reason:",e,fail+"\nPerhaps run as root?")
           return 1
@@ -267,20 +269,28 @@ def run_checks():
     quit()
 
 # Update
-def update():
-  print("Checking for dimensions file... ",end="")
+def update(silent=False):
+  if not silent:
+    print("Checking for dimensions file... ",end="")
   exit_code = dim()
   if exit_code == 0:
-    print(valid+"✔"+reset)
+    if not silent:
+      print(valid+"✔"+reset)
   else:
-    print(fail+"✕ - "+str(exit_code)+reset)
-    quit()
-  print("Updating dimensions file... ")
-  exit_code = up_dim()
+    if not silent:
+      print(fail+"✕ - "+str(exit_code)+reset)
+      quit()
+    else:
+      quit()
+  if not silent:
+    print("Updating dimensions file... ")
+  exit_code = up_dim(silent=True)
   if exit_code == 0:
-    print(valid+"Updated All ✔"+reset)
+    if not silent:
+      print(valid+"Updated All ✔"+reset)
   else:
-    print(fail+"Failed to Update ✕"+reset)
+    if not silent:
+      print(fail+"Failed to Update ✕"+reset)
     quit()
 
 # Find package
@@ -622,6 +632,7 @@ def main(*argv):
   if "-h" in argv or "help" in argv:
     help()
   elif "-i" in argv or "install" in argv:
+    update()
     if "-r" in argv:
       run_checks()
       if install(argv[-1], force=True):
@@ -631,6 +642,7 @@ def main(*argv):
       if install(argv[-1]):
         add_installed(argv[-1])
   elif "-ci" in argv or "installed" in argv:
+    update()
     list_installed()
   elif "-u" in argv or "update" in argv:
     run_checks()
@@ -652,6 +664,12 @@ def main(*argv):
   elif "-ls" in argv or "list-sources" in argv:
     run_checks()
     list_sources()
+  elif "-nv" in argv:
+    update(silent=True)
+    print({
+      "installed":get_local_version(argv[-1]),
+      "latest":get_version(argv[-1])
+      })
   else:
     help()
 
