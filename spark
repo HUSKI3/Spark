@@ -297,7 +297,7 @@ def update(silent=False):
 def find_pkg(name,dimensions, spec_ver=None):
   for source in dimensions.get('sources'):
     for pack in source['packs']:
-      if name == pack['name']:
+      if name.lower() == pack['name'].lower():
         if spec_ver:
           for version in pack['altver']:
             if version == spec_ver:
@@ -340,7 +340,7 @@ def install(package,force=False, spec_ver=None):
   if pack == None:
     print("No candidates with the name",package)
     quit()
-  if pack['depends'] == "none":
+  if 'depends' not in pack:
       deps = None
       predeps = "none"
   else:
@@ -348,14 +348,23 @@ def install(package,force=False, spec_ver=None):
     predeps = pack['depends']
     for dep in predeps:
       #print("dep in predeps 1 loop:",dep)
-      tempdep = find_pkg(dep,dimensions)
-      if tempdep['depends'] != "none":
-        if type(tempdep['depends']) is str:
-          predeps.append(tempdep['depends'])
-        elif type(tempdep['depends']) is list:
-          for dep in tempdep['depends']:
-            print(dep)
-            predeps.append(dep)
+      if '==' in dep:
+        #print("custom version")
+        tempdep = find_pkg(dep.split('==')[0].lower(),dimensions,spec_ver=dep.split('==')[-1])
+      else:
+        tempdep = find_pkg(dep.lower(),dimensions)
+      #print(tempdep)
+      if tempdep != None:
+        if 'depends' in tempdep:
+          if tempdep['depends'] != "none":
+            if type(tempdep['depends']) is str:
+              predeps.append(tempdep['depends'])
+            elif type(tempdep['depends']) is list:
+              for dep in tempdep['depends']:
+                print(dep)
+                predeps.append(dep)
+      else:
+        print("Dependency {} was not found?".format(dep))
   print(valid)
   print("Name:",package)
   if get_local_version(package) != False:
@@ -367,20 +376,34 @@ def install(package,force=False, spec_ver=None):
   print(reset)
   inp = input("Install? [y/n] ")
   if inp == "y" or inp == "Y":
-    if pack['depends'] != "none":
-      predeps.reverse()
-      for dep in predeps:
-        #print("dep in predep 2 loop:",dep)
-        if check_installed(dep) and not force:
-          print("installed already")
-        else:
-          dpack = find_pkg(dep,dimensions)
-          get_src(dpack['url'],dep)
-          unpack(dep)
-          build(dep,dpack['build'])
-          print(dep,dpack)
-          add_installed(dpack['name'])
-          #input()
+    if 'depends' in pack:
+      if pack['depends']:
+        predeps.reverse()
+        for dep in predeps:
+          #print("dep in predep 2 loop:",dep)
+          if check_installed(dep) and not force:
+            print("installed already")
+          else:
+            if '==' in dep:
+              dpack = find_pkg(dep.split('==')[0].lower(),dimensions,spec_ver=dep.split('==')[-1])
+              spec_ver = dep.split('==')[-1]
+              dep = dep.split('==')[0].lower()
+              spec = True
+            else:
+              dpack = find_pkg(dep,dimensions)
+              spec = False
+            if dpack == None:
+              print("Could not install {} :/".format(dep))
+              quit()
+            get_src(dpack['url'],dep)
+            unpack(dep)
+            build(dep,dpack['build'])
+            print(dep,dpack)
+            if spec:
+              add_installed(dep,spec_ver=spec_ver)
+            else:
+              add_installed(dep)
+            #input()
     get_src(pack['url'],package)
     unpack(package)
     build(package,pack['build'])
@@ -400,7 +423,8 @@ def uninstall(package,force=False):
       print("Locating in ~/.local/_dist/"+package,end="... ")
       ver_found = True
   if ver == None:
-    print("Failed to locate package",end=" ")
+    print("Failed to locate package")
+    quit()
     ver_found = False
   #print('~/.local/_dist/'+package)
   # if test -d ~/.local/_dist/emacs; then echo "exist"; fi 
@@ -420,7 +444,18 @@ def uninstall(package,force=False):
     txt = glob.glob("/root/.local/_dist/"+package+"/*.tar*")
     for tar in txt:
       os.system("rm -rf "+tar)
-    path_dir = glob.glob("/root/.local/_dist/"+package+"/"+package+"*")[0]
+    try:
+      path_dir = glob.glob("/root/.local/_dist/"+package+"/"+package+"*")[0]
+    except:
+      print(fail+"Can't locate package source but directory is present?"+reset)
+      if ver_found:
+        print("If you manually removed the package,\nwould you like to remove it's entry?")
+        c = input("Remove? [Y/N] ")
+        if c == "Y" or c == "y":
+          return True
+        else:
+          return False
+        quit()
     #print(path_dir)
     #quit()
     make_dir = glob.glob(path_dir+"/Makefile*")[0]
@@ -435,6 +470,13 @@ def uninstall(package,force=False):
           return True
         else:
           return False
+    print(fail+"Can't locate package source but directory is present?"+reset)
+    print("If you manually removed the package,\nwould you like to remove it's entry?")
+    c = input("Remove? [Y/N] ")
+    if c == "Y" or c == "y":
+      return True
+    else:
+      return False
   else:
     print(fail+"✕"+reset)
     if ver_found:
@@ -457,12 +499,16 @@ def get_src(uri,packname):
   os.system("cd /usr/spark/tmp && wget -q "+uri)
 
 def unpack(packname):
-  os.system("cd /usr/spark/tmp && tar xf "+packname+"* && ls") 
-  os.system("mkdir ~/.local/_dist")
-  os.system("mkdir ~/.local/_dist/"+packname) 
+  os.system("cd /usr/spark/tmp")
+  os.system("cd /usr/spark/tmp && tar xf "+packname+"*") 
+  os.system("mkdir -p ~/.local/_dist")
+  os.system("mkdir -p ~/.local/_dist/"+packname) 
 
 def build(packname,buildinst):
-  os.system("cd /usr/spark/tmp/"+packname+"* && "+buildinst) 
+  buildinst = ' '.join(buildinst.split()).replace('\\','')
+  #print(buildinst)
+  print("Building...")
+  os.popen("cd /usr/spark/tmp/"+packname+"* &&"+buildinst.replace('\t','').replace(' ',' ')).read()
   # cd /usr/spark/tmp && sudo cp -r emacs* ~/.local/_dist/emacs
   os.system("cd /usr/spark/tmp && cp -r "+packname+"* ~/.local/_dist/"+packname)
 
@@ -488,7 +534,7 @@ def get_version(name):
   for source in dimensions.datajson['sources']:
     #print(fail+source['name']+reset,"has:")
     for pack in source['packs']:
-      if pack['name'] == name:
+      if pack['name'].lower() == name.lower():
         return pack['version']
       else:
         #print(pack['name'],name,"no match")
@@ -499,7 +545,7 @@ def get_local_version(name):
   installed = ezconfig()
   installed.read("/usr/spark/installed.json")
   for pack in installed.get('packages'):
-    if pack == name:
+    if str(pack).lower() == name.lower():
       return installed.get('packages')[pack]['version']
     else:
       #print(pack['name'],name,"no match")
@@ -562,8 +608,7 @@ def add_installed(name,spec_ver=None):
   #print(packs)
   packs[name] ={
     "version":pack['version'],
-    "source":pack['url'],
-    "depends":pack['depends']
+    "source":pack['url']
   }
   #print(packs)
   installed.update_all()
@@ -614,7 +659,7 @@ def list_installed():
     else:
       print(package,"at",pkg['version'])
   if update_avail:
-    print("Shard is required to update packages!")
+    print("Shard is recommended to update packages!")
 
 def get_installed_version(name):
   installed = ezconfig()
@@ -638,6 +683,18 @@ def check_installed(name):
       return True
   return False
 
+def list_versions(name):
+  dimensions = ezconfig()
+  dimensions.read("/usr/spark/dimensions/dimensions.config")
+  for source in dimensions.datajson['sources']:
+    #print(fail+source['name']+reset,"has:")
+    for pack in source['packs']:
+      if pack['name'].lower() == name.lower():
+        print('Package versions for:',pack['name'])
+        for bit in pack['altver']:
+          print('version|size')
+          print(bit,'\t',pack['altver'][bit]['size'])
+
 def main(*argv): 
   # Check arguments
   argv=argv[0]
@@ -649,7 +706,7 @@ def main(*argv):
   if "-h" in argv or "help" in argv:
     help()
   elif "-i" in argv or "install" in argv:
-    update()
+    update(silent=True)
     if "==" in argv[-1]:
       #print(argv[-1])
       pkg_name = argv[-1].split("==")[0]
@@ -665,7 +722,7 @@ def main(*argv):
       if install(pkg_name):
         add_installed(pkg_name)
   elif "-ci" in argv or "installed" in argv:
-    update()
+    update(silent=True)
     list_installed()
   elif "-u" in argv or "update" in argv:
     run_checks()
@@ -673,7 +730,7 @@ def main(*argv):
   elif "-d" in argv or "dimension" in argv:
     run_checks()
     add_dimension(argv[-1])
-    update()
+    update(silent=True)
   elif "-l" in argv or "list" in argv:
     if '-q' in argv:
       list_packs(pattern=argv[-1])
@@ -686,10 +743,13 @@ def main(*argv):
   elif "-c" in argv or "clean" in argv:
     run_checks()
     os.system("cd /usr/spark/tmp && rm -r *")
-    update()
+    update(silent=True)
   elif "-ls" in argv or "list-sources" in argv:
     run_checks()
     list_sources()
+  elif "-lv" in argv or "list-versions" in argv:
+    run_checks()
+    list_versions(argv[-1])    
   elif "-nv" in argv:
     update(silent=True)
     print({
