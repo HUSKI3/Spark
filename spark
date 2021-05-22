@@ -8,6 +8,54 @@ import subprocess
 import platform
 import requests
 from pathlib import Path
+from itertools import cycle
+from shutil import get_terminal_size
+from threading import Thread
+from time import sleep
+
+
+class Loader:
+    def __init__(self, desc="Loading...", end="Done!", timeout=0.1):
+        """
+        A loader-like context manager
+
+        Args:
+            desc (str, optional): The loader's description. Defaults to "Loading...".
+            end (str, optional): Final print. Defaults to "Done!".
+            timeout (float, optional): Sleep time between prints. Defaults to 0.1.
+        """
+        self.desc = desc
+        self.end = end
+        self.timeout = timeout
+
+        self._thread = Thread(target=self._animate, daemon=True)
+        self.steps = ["⢿", "⣻", "⣽", "⣾", "⣷", "⣯", "⣟", "⡿"]
+        self.done = False
+
+    def start(self):
+        self._thread.start()
+        return self
+
+    def _animate(self):
+        for c in cycle(self.steps):
+            if self.done:
+                break
+            print(f"\r{self.desc} {c}", flush=True, end="")
+            sleep(self.timeout)
+
+    def __enter__(self):
+        self.start()
+
+    def stop(self):
+        self.done = True
+        cols = get_terminal_size((80, 20)).columns
+        print("\r" + " " * cols, end="", flush=True)
+        print(f"\r{self.end}", flush=True)
+
+    def __exit__(self, exc_type, exc_value, tb):
+        # handle exceptions with those variables ^
+        self.stop()
+
 
 # 
 # ==============================================
@@ -299,10 +347,13 @@ def find_pkg(name,dimensions, spec_ver=None):
     for pack in source['packs']:
       if name.lower() == pack['name'].lower():
         if spec_ver:
-          for version in pack['altver']:
-            if version == spec_ver:
-              pack['altver'][version]['version'] = version
-              return pack['altver'][version]
+          if spec_ver == pack['version']:
+            return pack
+          else:
+            for version in pack['altver']:
+              if version == spec_ver:
+                pack['altver'][version]['version'] = version
+                return pack['altver'][version]
         else:
           return pack
   return None
@@ -346,6 +397,8 @@ def install(package,force=False, spec_ver=None):
   else:
     deps = []
     predeps = pack['depends']
+    inst=False
+    inst_list = []
     for dep in predeps:
       #print("dep in predeps 1 loop:",dep)
       if '==' in dep:
@@ -361,10 +414,14 @@ def install(package,force=False, spec_ver=None):
               predeps.append(tempdep['depends'])
             elif type(tempdep['depends']) is list:
               for dep in tempdep['depends']:
-                print(dep)
-                predeps.append(dep)
+                #print(dep)
+                if not dep in predeps:
+                  predeps.append(dep)
       else:
         print("Dependency {} was not found?".format(dep))
+      if check_installed(dep.split('==')[0].lower()):
+        inst=True
+        inst_list.append(dep)
   print(valid)
   print("Name:",package)
   if get_local_version(package) != False:
@@ -373,6 +430,8 @@ def install(package,force=False, spec_ver=None):
     print("Version:",pack['version'])
   print("Size:",pack['size'],"mb - upon installation")
   print("Depends on:",predeps)
+  if inst:
+    print("Dependencies that are present:",inst_list)
   print(reset)
   inp = input("Install? [y/n] ")
   if inp == "y" or inp == "Y":
@@ -380,34 +439,39 @@ def install(package,force=False, spec_ver=None):
       if pack['depends']:
         predeps.reverse()
         for dep in predeps:
-          #print("dep in predep 2 loop:",dep)
-          if check_installed(dep) and not force:
+          if check_installed(dep.split('==')[0].lower()) and not force:
             print("installed already")
           else:
             if '==' in dep:
               dpack = find_pkg(dep.split('==')[0].lower(),dimensions,spec_ver=dep.split('==')[-1])
+              #print("need",dep.split('==')[0].lower(),"at",dep.split('==')[-1])
               spec_ver = dep.split('==')[-1]
               dep = dep.split('==')[0].lower()
               spec = True
             else:
               dpack = find_pkg(dep,dimensions)
               spec = False
+            #print(dpack)
             if dpack == None:
               print("Could not install {} :/".format(dep))
               quit()
             get_src(dpack['url'],dep)
             unpack(dep)
             build(dep,dpack['build'])
-            print(dep,dpack)
+            #print(dep,dpack)
             if spec:
               add_installed(dep,spec_ver=spec_ver)
             else:
               add_installed(dep)
             #input()
-    get_src(pack['url'],package)
-    unpack(package)
-    build(package,pack['build'])
-
+    if 'url' in pack:
+      get_src(pack['url'],package)
+      unpack(package)
+      build(package,pack['build'])
+    else:
+      print("Detected a test package! Skipping download. Building...")
+      build(package,pack['build'],test=True)
+      return False
     return True
   return False
 
@@ -504,18 +568,24 @@ def unpack(packname):
   os.system("mkdir -p ~/.local/_dist")
   os.system("mkdir -p ~/.local/_dist/"+packname) 
 
-def build(packname,buildinst):
+def build(packname,buildinst,test=False):
   buildinst = ' '.join(buildinst.split()).replace('\\','')
   #print(buildinst)
-  print("Building...")
-  os.popen("cd /usr/spark/tmp/"+packname+"* &&"+buildinst.replace('\t','').replace(' ',' ')).read()
-  # cd /usr/spark/tmp && sudo cp -r emacs* ~/.local/_dist/emacs
-  os.system("cd /usr/spark/tmp && cp -r "+packname+"* ~/.local/_dist/"+packname)
+  if not test:
+    with Loader("Building... "):
+      os.popen("cd /usr/spark/tmp/"+packname+"* &&"+buildinst.replace('\t','').replace(' ',' ')).read()
+    # cd /usr/spark/tmp && sudo cp -r emacs* ~/.local/_dist/emacs
+    os.system("cd /usr/spark/tmp && cp -r "+packname+"* ~/.local/_dist/"+packname)
+  else:
+    os.system(buildinst)
 
 def list_packs(pattern=None):
+  sources_count = 0
+  package_count = 0
   dimensions = ezconfig()
   dimensions.read("/usr/spark/dimensions/dimensions.config")
   for source in dimensions.datajson['sources']:
+    sources_count += 1
     found = False
     print(fail+source['name']+reset,"has:")
     for pack in source['packs']:
@@ -523,10 +593,13 @@ def list_packs(pattern=None):
         if pattern in pack['name']:
           print(pack['name'],"version",pack['version'])
           found = True
+          package_count+=1
       else:
         print(pack['name'],"version",pack['version'])
+        package_count +=1
     if not found:
       print("No matches in this source")
+  print(package_count,'packages available from',sources_count,'repos')
 
 def get_version(name):
   dimensions = ezconfig()
@@ -706,7 +779,7 @@ def main(*argv):
   if "-h" in argv or "help" in argv:
     help()
   elif "-i" in argv or "install" in argv:
-    update(silent=True)
+    #update(silent=True)
     if "==" in argv[-1]:
       #print(argv[-1])
       pkg_name = argv[-1].split("==")[0]
