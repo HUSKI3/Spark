@@ -457,13 +457,21 @@ def build(packname,buildinst):
   # cd /usr/spark/tmp && sudo cp -r emacs* ~/.local/_dist/emacs
   os.system("cd /usr/spark/tmp && cp -r "+packname+"* ~/.local/_dist/"+packname)
 
-def list_packs():
+def list_packs(pattern=None):
   dimensions = ezconfig()
   dimensions.read("/usr/spark/dimensions/dimensions.config")
   for source in dimensions.datajson['sources']:
+    found = False
     print(fail+source['name']+reset,"has:")
     for pack in source['packs']:
-      print(pack['name'],"version",pack['version'])
+      if pattern:
+        if pattern in pack['name']:
+          print(pack['name'],"version",pack['version'])
+          found = True
+      else:
+        print(pack['name'],"version",pack['version'])
+    if not found:
+      print("No matches in this source")
 
 def get_version(name):
   dimensions = ezconfig()
@@ -652,7 +660,10 @@ def main(*argv):
     add_dimension(argv[-1])
     update()
   elif "-l" in argv or "list" in argv:
-    list_packs()
+    if '-q' in argv:
+      list_packs(pattern=argv[-1])
+    else:
+      list_packs()
   elif "-un" in argv or "uninstall" in argv:
     run_checks()
     if uninstall(argv[-1]):
