@@ -294,15 +294,21 @@ def update(silent=False):
     quit()
 
 # Find package
-def find_pkg(name,dimensions):
+def find_pkg(name,dimensions, spec_ver=None):
   for source in dimensions.get('sources'):
     for pack in source['packs']:
       if name == pack['name']:
-        return pack
+        if spec_ver:
+          for version in pack['altver']:
+            if version == spec_ver:
+              pack['altver'][version]['version'] = version
+              return pack['altver'][version]
+        else:
+          return pack
   return None
 
 # Install
-def install(package,force=False):
+def install(package,force=False, spec_ver=None):
   dimensions = ezconfig()
   # check if it exists
   print("Reading dimensions file... ",end="")
@@ -315,19 +321,22 @@ def install(package,force=False):
   print("Checking if package is installed... "+valid+"✔"+reset)
   #print(get_local_version(package))
   #nput()
-  if not force:
-    if check_installed(package):
-      pack = find_pkg(package,dimensions)
-      if str(pack['version']) != str(get_local_version(package)):
-        print("Package is installed but a new version is available")
-      elif str(pack['version']) == str(get_local_version(package)):
-        print("Package is already installed at the version",get_local_version(package))
-        print("Repo latest is",pack['version'])
-        quit()
-      else:
-        print("Package is installed to the latest recommended version")
+  if spec_ver == None:
+    if not force:
+      if check_installed(package):
+        pack = find_pkg(package,dimensions)
+        if str(pack['version']) != str(get_local_version(package)):
+          print("Package is installed but a new version is available")
+        elif str(pack['version']) == str(get_local_version(package)):
+          print("Package is already installed at the version",get_local_version(package))
+          print("Repo latest is",pack['version'])
+          quit()
+        else:
+          print("Package is installed to the latest recommended version")
+  else:
+    print("You are about to install a specific version:",spec_ver)
   print("Preparing to install",package,"..."+valid+"✔"+reset)
-  pack = find_pkg(package,dimensions)
+  pack = find_pkg(package,dimensions,spec_ver=spec_ver)
   if pack == None:
     print("No candidates with the name",package)
     quit()
@@ -348,9 +357,9 @@ def install(package,force=False):
             print(dep)
             predeps.append(dep)
   print(valid)
-  print("Name:",pack['name'])
-  if get_local_version(pack['name']) != False:
-    print("Version:",pack['version'],"({} is installed)".format(get_local_version(pack['name'])))
+  print("Name:",package)
+  if get_local_version(package) != False:
+    print("Version:",pack['version'],"({} is installed)".format(get_local_version(package)))
   else:
     print("Version:",pack['version'])
   print("Size:",pack['size'],"mb - upon installation")
@@ -372,9 +381,9 @@ def install(package,force=False):
           print(dep,dpack)
           add_installed(dpack['name'])
           #input()
-    get_src(pack['url'],pack['name'])
-    unpack(pack['name'])
-    build(pack['name'],pack['build'])
+    get_src(pack['url'],package)
+    unpack(package)
+    build(package,pack['build'])
 
     return True
   return False
@@ -515,7 +524,7 @@ def add_dimension(url):
   dimensions.update_all()
   print(valid+"✔"+reset)
 
-def add_installed(name):
+def add_installed(name,spec_ver=None):
   dimensions = ezconfig()
   # check if it exists
   print("Reading dimensions file... ",end="")
@@ -526,7 +535,7 @@ def add_installed(name):
     print(fail+"✕ - "+str(exit_code)+reset)
     quit()
   installed = ezconfig()
-  pack = find_pkg(name,dimensions)
+  pack = find_pkg(name,dimensions,spec_ver)
   try:
     exit_code = installed.read("/usr/spark/installed.json")
     if exit_code == 1:
@@ -641,14 +650,20 @@ def main(*argv):
     help()
   elif "-i" in argv or "install" in argv:
     update()
+    if "==" in argv[-1]:
+      #print(argv[-1])
+      pkg_name = argv[-1].split("==")[0]
+      pkg_ver  = argv[-1].split("==")[1]
+    else:
+      pkg_name = argv[-1]
     if "-r" in argv:
       run_checks()
-      if install(argv[-1], force=True):
-        add_installed(argv[-1])
+      if install(pkg_name, force=True, spec_ver=pkg_ver):
+        add_installed(pkg_name,spec_ver=pkg_ver)
     else:
       run_checks()
-      if install(argv[-1]):
-        add_installed(argv[-1])
+      if install(pkg_name):
+        add_installed(pkg_name)
   elif "-ci" in argv or "installed" in argv:
     update()
     list_installed()
