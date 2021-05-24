@@ -399,6 +399,7 @@ def install(package,force=False, spec_ver=None):
     predeps = pack['depends']
     inst=False
     inst_list = []
+    dep_missing = False
     for dep in predeps:
       #print("dep in predeps 1 loop:",dep)
       if '==' in dep:
@@ -419,9 +420,13 @@ def install(package,force=False, spec_ver=None):
                   predeps.append(dep)
       else:
         print("Dependency {} was not found?".format(dep))
+        dep_missing = True
       if check_installed(dep.split('==')[0].lower()):
         inst=True
         inst_list.append(dep)
+  if dep_missing:
+    print("One or more dependencies are not present in your sources. Refusing to install...")
+    quit()
   print(valid)
   print("Name:",package)
   if get_local_version(package) != False:
