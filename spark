@@ -111,6 +111,7 @@ class ezconfig:
         return json.loads(str(var_val))[str(args[0])]
     except Exception as e:
       print("[1] could not get variable ["+str(var)+"] does it exist in "+self.filename+"?\nPython error: "+str(e))
+      print(self.datajson)
       quit()
     if var_val == None:
       print("[2] could not get variable ["+str(var)+"]. It equals to None, is there a python problem?")
@@ -659,7 +660,6 @@ def add_installed(name,spec_ver=None):
     print(fail+"✕ - "+str(exit_code)+reset)
     quit()
   installed = ezconfig()
-  
   try:
     exit_code = installed.read("/usr/spark/installed.json")
     if exit_code == 1:
