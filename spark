@@ -659,7 +659,7 @@ def add_installed(name,spec_ver=None):
     print(fail+"✕ - "+str(exit_code)+reset)
     quit()
   installed = ezconfig()
-  pack = find_pkg(name,dimensions,spec_ver)
+  
   try:
     exit_code = installed.read("/usr/spark/installed.json")
     if exit_code == 1:
@@ -682,6 +682,7 @@ def add_installed(name,spec_ver=None):
   except Exception as e:
     print(e)
     quit()
+  pack = find_pkg(name,dimensions,spec_ver)
   packs = installed.get("packages")
   #print(packs)
   packs[name] ={
