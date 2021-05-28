@@ -755,7 +755,23 @@ def get_installed_version(name):
   
 def check_installed(name):
   installed = ezconfig()
-  exit_code = installed.read("/usr/spark/installed.json")
+  try:
+    exit_code = installed.read("/usr/spark/installed.json")
+  except:
+    print("Failed to read (installed.json), fixing...")
+    with open("/usr/spark/installed.json","w+") as f:
+          f.write("""
+            {
+   "packages":{
+      "spark":{
+         "version":"0.0.0",
+         "source":"github.com/HUSKI3/Spark",
+         "author":"HUSKI3",
+         "depends":"none"
+      }
+   }
+}
+            """)
   #print(installed.get('packages'))
   for package in installed.get('packages'):
     if name == package:
