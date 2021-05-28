@@ -738,27 +738,13 @@ def list_installed():
     else:
       print(package,"at",pkg['version'])
   if update_avail:
-    print("Shard is recommended to update packages!")
-
-def get_installed_version(name):
-  installed = ezconfig()
-  exit_code = installed.read("/usr/spark/installed.json")
-  #print(installed.datajson['packages'][name])
-  for package in installed.datajson['packages'][name]:
-    if package == name:
-      pkg = installed.get('packages')[package]
-      #print(pkg)
-      #quit()
-      return pkg
-  return None
-    
+    print("Shard is recommended to update packages!")    
   
 def check_installed(name):
   installed = ezconfig()
-  print("FUCKY WUCKY-ERY HERE")
   exit_code = installed.read("/usr/spark/installed.json")
   if exit_code == 1:
-    print("Failed to read (installed.json), fixing...")
+    print("Failed to read (installed.json), fixing... ",end='')
     with open("/usr/spark/installed.json","w+") as f:
           f.write("""
             {
@@ -772,6 +758,8 @@ def check_installed(name):
    }
 }
             """)
+    print(valid+"✔"+reset)
+    quit()
   #print(installed.get('packages'))
   for package in installed.get('packages'):
     if name == package:
