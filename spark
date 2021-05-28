@@ -755,6 +755,7 @@ def get_installed_version(name):
   
 def check_installed(name):
   installed = ezconfig()
+  print("FUCKY WUCKY-ERY HERE")
   try:
     exit_code = installed.read("/usr/spark/installed.json")
   except:
