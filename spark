@@ -574,7 +574,7 @@ def uninstall(package,force=False):
       print(fail+"Package is installed but the source path is missing!"+reset)
       print("If you manually removed the package,\nwould you like to remove it's entry?")
       c = input("Remove? [Y/N] ")
-      if c == "Y" or c == "y":
+      if c in ['Y', 'y']:
         return True
       else:
         return False
