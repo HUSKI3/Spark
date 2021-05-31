@@ -140,6 +140,11 @@ class ezconfig:
     :param var: variable to get
     :return var_val:
     """
+
+    # colours
+    fail = "\u001b[31m"
+    reset = "\u001b[0m"
+
     #update datajson
     self.read(self.filename)
     try:
@@ -149,11 +154,11 @@ class ezconfig:
         var_val = p.sub('\"', str(var_val))
         return json.loads(str(var_val))[str(args[0])]
     except Exception as e:
-      print("[1] could not get variable ["+str(var)+"] does it exist in "+self.filename+"?\nPython error: "+str(e))
+      print(fail+"[1] "+reset+ "could not get variable ["+str(var)+"] does it exist in "+self.filename+"?\nPython error: "+str(e))
       print(self.datajson)
       quit()
     if var_val == None:
-      print("[2] could not get variable ["+str(var)+"]. It equals to None, is there a python problem?")
+      print(fail+"[2] "+reset+ "could not get variable ["+str(var)+"]. It equals to None, is there a python problem?")
       quit()
     else:
       return var_val
@@ -294,24 +299,28 @@ Usage:
 """)
 
 # Get dimensions information
+
+# this is not a dic joke :kek:
+sample_dim = ("""
+    {
+      "name":"dimensions_config",
+      "sources":[{
+          "name":"spark_official",
+          "url":"https://sparkofficial.ubuntulove2004.repl.co/",
+          "date":"",
+          "packs":[
+            "none"
+          ]
+      }]
+    }""")
+
 def dim():
   dimensions = ezconfig()
   try:
     exit_code = dimensions.read("/usr/spark/dimensions/dimensions.config")
     if exit_code == 1:
         with open("/usr/spark/dimensions/dimensions.config","w+") as f:
-          f.write("""
-          {
-            "name":"dimensions_config",
-            "sources":[{
-                "name":"spark_official",
-                "url":"https://sparkofficial.ubuntulove2004.repl.co/",
-                "date":"",
-                "packs":[
-                  "none"
-                ]
-            }]
-          }""")
+          f.write(sample_dim)
 
         return "No dimensions set, fixing... "+valid+"fixed!"+reset
     return 0
