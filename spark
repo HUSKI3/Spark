@@ -11,7 +11,7 @@ from pathlib import Path
 from itertools import cycle
 from shutil import get_terminal_size
 from threading import Thread
-from time import sleep
+from time import *
 
 
 #
@@ -22,7 +22,8 @@ from time import sleep
 
 point = "•"
 
-class merror:
+
+class merrors:
   def __init__(self):
     self.errors = []
 
