@@ -11,7 +11,42 @@ from pathlib import Path
 from itertools import cycle
 from shutil import get_terminal_size
 from threading import Thread
-from time import sleep
+from time import *
+
+
+#
+# ==============================================
+#                     MERROR
+# ==============================================
+#
+
+point = "•"
+
+
+class merrors:
+  def __init__(self):
+    self.errors = []
+
+  def error(self, msg):
+    print("\u001b[31m", point, f"[ERROR] {msg}")
+    self.errors += ["Error", msg, time.strftime("%H:%M:%S", time.localtime())]
+
+  def bigpanik(self):
+    print("\u001b[31m", point,
+          f"[PANIC] The program could not handle the request")
+    self.errors += ["Panic", time.strftime("%H:%M:%S", time.localtime())]
+
+  def getall(self):
+    return self.errors
+#USAGE
+#error("Could not load anything oopsie")
+
+
+#
+# ==============================================
+#                     LOADER
+# ==============================================
+#
 
 
 class Loader:
@@ -55,6 +90,10 @@ class Loader:
     def __exit__(self, exc_type, exc_value, tb):
         # handle exceptions with those variables ^
         self.stop()
+
+
+
+
 
 
 # 
@@ -101,6 +140,11 @@ class ezconfig:
     :param var: variable to get
     :return var_val:
     """
+
+    # colours
+    fail = "\u001b[31m"
+    reset = "\u001b[0m"
+
     #update datajson
     self.read(self.filename)
     try:
@@ -110,11 +154,11 @@ class ezconfig:
         var_val = p.sub('\"', str(var_val))
         return json.loads(str(var_val))[str(args[0])]
     except Exception as e:
-      print("[1] could not get variable ["+str(var)+"] does it exist in "+self.filename+"?\nPython error: "+str(e))
+      print(fail+"[1] "+reset+ "could not get variable ["+str(var)+"] does it exist in "+self.filename+"?\nPython error: "+str(e))
       print(self.datajson)
       quit()
     if var_val == None:
-      print("[2] could not get variable ["+str(var)+"]. It equals to None, is there a python problem?")
+      print(fail+"[2] "+reset+ "could not get variable ["+str(var)+"]. It equals to None, is there a python problem?")
       quit()
     else:
       return var_val
@@ -203,11 +247,21 @@ def hex_to_rgb(hex):
         hex = hex.replace('#', '')
         return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
 
+
+
+# *boss music plays*
+
 #
 # ==============================================
 #                     Spark
 # ==============================================
 #
+
+# Path (made vars so easy to manage)
+checkfile = "/usr/spark/spark.check"
+dimensions_cfg = "/usr/spark/dimensions/dimensions.config"
+
+
 
 # Colours:
 reset = "\u001b[0m"
@@ -217,22 +271,15 @@ fail  = "\u001b[31m"
 # Paths
 def dirs(sudo):
   try: 
-    with open("/usr/spark/spark.check","r") as f:
+    with open(checkfile ,"r") as f:
       f.read()
       return 0
   except:
-    if sudo:
-      os.system("sudo mkdir -p /usr/spark")
-      os.system("sudo mkdir -p /usr/spark/tmp")
-      os.system("sudo mkdir -p /usr/spark/packs && sudo touch /usr/spark/packs/installed && sudo touch /usr/spark/spark.check && sudo chmod 777 /usr/spark/packs/installed")
-      os.system("sudo mkdir -p /usr/spark/dimensions && sudo touch /usr/spark/dimensions/dimensions.config")
-      os.system("sudo mkdir -p /usr/spark/installed/_local")
-    else:
-      os.system(" mkdir -p /usr/spark")
-      os.system(" mkdir -p /usr/spark/tmp")
-      os.system(" mkdir -p /usr/spark/packs &&  touch /usr/spark/packs/installed &&  touch /usr/spark/spark.check &&  chmod 777 /usr/spark/packs/installed")
-      os.system(" mkdir -p /usr/spark/dimensions &&  touch /usr/spark/dimensions/dimensions.config")
-      os.system(" mkdir -p /usr/spark/installed/_local")
+    os.system("{}mkdir -p /usr/spark".format("sudo " if sudo else ""))
+    os.system("{}mkdir -p /usr/spark/tmp".format("sudo " if sudo else ""))
+    os.system("{}mkdir -p /usr/spark/packs && sudo touch /usr/spark/packs/installed && sudo touch /usr/spark/spark.check && sudo chmod 777 /usr/spark/packs/installed".format("sudo " if sudo else ""))
+    os.system("{}mkdir -p /usr/spark/dimensions && sudo touch /usr/spark/dimensions/dimensions.config".format("sudo " if sudo else ""))
+    os.system("{}mkdir -p /usr/spark/installed/_local".format("sudo " if sudo else ""))
     return 1
 
 # Help command
@@ -252,23 +299,29 @@ Usage:
 """)
 
 # Get dimensions information
+
+# this is not a dic joke :kek:
+sample_dim = ("""
+    {
+      "name":"dimensions_config",
+      "sources":[{
+          "name":"spark_official",
+          "url":"https://sparkofficial.ubuntulove2004.repl.co/",
+          "date":"",
+          "packs":[
+            "none"
+          ]
+      }]
+    }""")
+
 def dim():
   dimensions = ezconfig()
   try:
     exit_code = dimensions.read("/usr/spark/dimensions/dimensions.config")
     if exit_code == 1:
         with open("/usr/spark/dimensions/dimensions.config","w+") as f:
-          f.write("""{
-   "name":"dimensions_config",
-   "sources":[{
-      "name":"spark_official",
-      "url":"https://sparkofficial.ubuntulove2004.repl.co/",
-      "date":"",
-      "packs":[
-         "none"
-      ]
-   }]
-}""")
+          f.write(sample_dim)
+
         return "No dimensions set, fixing... "+valid+"fixed!"+reset
     return 0
   except Exception as e:
@@ -278,9 +331,13 @@ def dim():
 def up_dim(silent=False):
   dimensions = ezconfig()
   try:
-    exit_code = dimensions.read("/usr/spark/dimensions/dimensions.config")
+
+    # dimensions_cfg: /usr/spark/dimensions/dimensions.config
+    exit_code = dimensions.read(dimensions_cfg)
+    
     if exit_code == 1:
       return 1
+    
     else:
       for source in dimensions.get('sources'):
         if not silent:
@@ -399,11 +456,12 @@ def install(package,force=False, spec_ver=None):
       inst=False
       inst_list = []
   else:
-    deps = []
+    deps = []   # unused var?
     predeps = pack['depends']
     inst=False
     inst_list = []
     dep_missing = False
+    
     for dep in predeps:
       #print("dep in predeps 1 loop:",dep)
       if '==' in dep:
@@ -443,7 +501,7 @@ def install(package,force=False, spec_ver=None):
     print("Dependencies that are present:",inst_list)
   print(reset)
   inp = input("Install? [y/n] ")
-  if inp == "y" or inp == "Y":
+  if inp in ['Y', 'y']:
     if 'depends' in pack:
       if pack['depends']:
         predeps.reverse()
@@ -524,7 +582,7 @@ def uninstall(package,force=False):
       if ver_found:
         print("If you manually removed the package,\nwould you like to remove it's entry?")
         c = input("Remove? [Y/N] ")
-        if c == "Y" or c == "y":
+        if c in ['Y', 'y']:
           return True
         else:
           return False
@@ -538,7 +596,7 @@ def uninstall(package,force=False):
       if "uninstall" in make:
         #print("Makefile has uninstall!")
         c = input("Uninstall? [Y/N] ")
-        if c == "y" or c == "Y":
+        if c in ['Y', 'y']:
           os.system("cd "+path_dir+" && make uninstall")
           return True
         else:
@@ -546,7 +604,7 @@ def uninstall(package,force=False):
     print(fail+"Can't locate package source but directory is present?"+reset)
     print("If you manually removed the package,\nwould you like to remove it's entry?")
     c = input("Remove? [Y/N] ")
-    if c == "Y" or c == "y":
+    if c in ['Y', 'y']:
       return True
     else:
       return False
@@ -556,7 +614,7 @@ def uninstall(package,force=False):
       print(fail+"Package is installed but the source path is missing!"+reset)
       print("If you manually removed the package,\nwould you like to remove it's entry?")
       c = input("Remove? [Y/N] ")
-      if c == "Y" or c == "y":
+      if c in ['Y', 'y']:
         return True
       else:
         return False
