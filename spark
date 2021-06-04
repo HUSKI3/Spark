@@ -522,8 +522,8 @@ def install(package,force=False, spec_ver=None):
             if dpack == None:
               print("Could not install {} :/".format(dep))
               quit()
-            get_src(dpack['url'],dep)
-            unpack(dep)
+            local = get_src(dpack['url'],dep,dpack['version'])
+            unpack(dep,local)
             build(dep,dpack['build'])
             #print(dep,dpack)
             if spec:
@@ -532,8 +532,8 @@ def install(package,force=False, spec_ver=None):
               add_installed(dep)
             #input()
     if 'url' in pack:
-      get_src(pack['url'],package)
-      unpack(package)
+      local = get_src(pack['url'],package,pack['version'])
+      unpack(package,local)
       build(package,pack['build'])
     else:
       print("Detected a test package! Skipping download. Building...")
@@ -624,14 +624,22 @@ def uninstall(package,force=False):
   
 
 # Get package source
-def get_src(uri,packname):
+def get_src(uri,packname,version):
+  print("Checking if source is available locally ...",end=" ")
+  inst = glob.glob("/usr/spark/tmp/"+packname+"*")
+  if inst:
+    print(valid+"✔"+reset)
+    if version in inst[0]:
+      return "local"
   print("Downloading source from ",uri,"...")
   os.system("cd /usr/spark/tmp && rm -r "+packname+"* > /dev/null")
   os.system("cd /usr/spark/tmp && wget -q "+uri)
+  return None
 
-def unpack(packname):
+def unpack(packname,local):
   os.system("cd /usr/spark/tmp")
-  os.system("cd /usr/spark/tmp && tar xf "+packname+"*") 
+  if not local:
+    os.system("cd /usr/spark/tmp && tar xf "+packname+"*") 
   os.system("mkdir -p ~/.local/_dist")
   os.system("rm -r ~/.local/_dist/"+packname)
   os.system("mkdir -p ~/.local/_dist/"+packname) 
@@ -836,6 +844,14 @@ def list_versions(name):
           print('version|size')
           print(bit,'\t',pack['altver'][bit]['size'])
 
+def update_spark():
+  version = check_installed("spark")
+  add_installed("spark",version)
+  os.system(f"cd /usr/spark/ &&  rm -r spark && wget https://github.com/HUSKI3/Spark/releases/download/{version}/spark > /dev/null && chmod +x spark")
+  os.system("rm -rf /bin/spark")
+  os.system("ln -sf /usr/spark/spark /bin/spark")
+
+
 def main(*argv): 
   # Check arguments
   argv=argv[0]
@@ -868,6 +884,9 @@ def main(*argv):
   elif "-u" in argv or "update" in argv:
     run_checks()
     update()
+  elif "-up" in argv or "upgrade" in argv:
+    run_checks()
+    update_spark()
   elif "-d" in argv or "dimension" in argv:
     run_checks()
     add_dimension(argv[-1])
