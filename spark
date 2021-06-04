@@ -20,7 +20,7 @@ class Loader:
         A loader-like context manager
 
         Args:
-            desc (str, optional): The loader's description. Defaults to "Loading...".
+            desc (str, optional): The loader's descrpition. Defaults to "Loading...".
             end (str, optional): Final print. Defaults to "Done!".
             timeout (float, optional): Sleep time between prints. Defaults to 0.1.
         """
@@ -395,6 +395,9 @@ def install(package,force=False, spec_ver=None):
   if 'depends' not in pack:
       deps = None
       predeps = "none"
+      dep_missing = False
+      inst=False
+      inst_list = []
   else:
     deps = []
     predeps = pack['depends']
@@ -565,13 +568,14 @@ def uninstall(package,force=False):
 # Get package source
 def get_src(uri,packname):
   print("Downloading source from ",uri,"...")
-  os.system("cd /usr/spark/tmp && rm -r "+packname+"*")
+  os.system("cd /usr/spark/tmp && rm -r "+packname+"* > /dev/null")
   os.system("cd /usr/spark/tmp && wget -q "+uri)
 
 def unpack(packname):
   os.system("cd /usr/spark/tmp")
   os.system("cd /usr/spark/tmp && tar xf "+packname+"*") 
   os.system("mkdir -p ~/.local/_dist")
+  os.system("rm -r ~/.local/_dist/"+packname)
   os.system("mkdir -p ~/.local/_dist/"+packname) 
 
 def build(packname,buildinst,test=False):
@@ -623,14 +627,10 @@ def get_version(name):
 def get_local_version(name):
   installed = ezconfig()
   installed.read("/usr/spark/installed.json")
-  for pack in installed.get('packages'):
-    if str(pack).lower() == name.lower():
-      return installed.get('packages')[pack]['version']
-    else:
-      #print(pack['name'],name,"no match")
-      continue
-  return False
-
+  try:
+    return installed.get('packages')[name.lower()]['version']
+  except KeyError:
+    return None
 
 def list_sources():
   dimensions = ezconfig()
@@ -805,7 +805,7 @@ def main(*argv):
       if install(pkg_name):
         add_installed(pkg_name)
   elif "-ci" in argv or "installed" in argv:
-    update(silent=True)
+    #update(silent=True)
     list_installed()
   elif "-u" in argv or "update" in argv:
     run_checks()
