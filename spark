@@ -296,6 +296,7 @@ Usage:
 \t spark < -u / update > <package name> = Updates sources
 \t spark < -ls / list-sources > = Shows available sources
 \t spark < -ci / installed > = Shows intalled packages
+\t spark < -up / upgrade > = Upgrades spark
 """)
 
 # Get dimensions information
@@ -557,6 +558,9 @@ def uninstall(package,force=False):
     print("Failed to locate package")
     quit()
     ver_found = False
+
+  ### What the fuck is the code below
+
   #print('~/.local/_dist/'+package)
   # if test -d ~/.local/_dist/emacs; then echo "exist"; fi 
   #a=  os.popen('whoami').read()
@@ -748,7 +752,12 @@ def add_installed(name,spec_ver=None):
   except Exception as e:
     print(e)
     quit()
-  pack = find_pkg(name,dimensions,spec_ver)
+  if name == "spark":
+    pack = {}
+    pack['version'] = spec_ver
+    pack['url'] = "https://github.com/HUSKI3/Spark"
+  else:
+    pack = find_pkg(name,dimensions,spec_ver)
   packs = installed.get("packages")
   #print(packs)
   packs[name] ={
@@ -845,10 +854,25 @@ def list_versions(name):
           print(bit,'\t',pack['altver'][bit]['size'])
 
 def update_spark():
-  version = check_installed("spark")
+  version = get_local_version("spark")
+  #print(version)
+  #quit()
+  response = requests.get("https://api.github.com/repos/HUSKI3/Spark/releases/latest")
+  sparky = response.json()
+  print(valid+f"======== {sparky['name']} ========\n"+reset+" Bringing life to your machine ;)")
+  print(valid+"Changes:\n"+reset+" "+sparky['body'])
+  print(valid+"Uploader: "+reset+sparky['assets'][0]['uploader']['login'])
+  if sparky['tag_name'] != version:
+    print(valid+"This is a new version!"+reset)
+  r = requests.get(f"https://github.com/HUSKI3/Spark/releases/download/{sparky['tag_name']}/spark")
+  if r.status_code != 200:
+    print("Failed to fetch version?")
+    print(r.text)
+    quit()
   add_installed("spark",version)
-  os.system(f"cd /usr/spark/ &&  rm -r spark && wget https://github.com/HUSKI3/Spark/releases/download/{version}/spark > /dev/null && chmod +x spark")
-  os.system("rm -rf /bin/spark")
+  os.system("cd /usr/spark/ && rm -r spark > /dev/null")
+  os.system(f"cd /usr/spark/ && wget -q https://github.com/HUSKI3/Spark/releases/download/{sparky['tag_name']}/spark && chmod +x spark")
+  #os.system("rm -r /bin/spark > /dev/null")
   os.system("ln -sf /usr/spark/spark /bin/spark")
 
 
@@ -885,7 +909,7 @@ def main(*argv):
     run_checks()
     update()
   elif "-up" in argv or "upgrade" in argv:
-    run_checks()
+    #run_checks()
     update_spark()
   elif "-d" in argv or "dimension" in argv:
     run_checks()
