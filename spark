@@ -851,6 +851,12 @@ def update_spark():
   os.system("rm -rf /bin/spark")
   os.system("ln -sf /usr/spark/spark /bin/spark")
 
+def checkPKG(argv):
+  update(silent=True)
+  print({
+    "installed":get_local_version(argv[-1]),
+    "latest":get_version(argv[-1])
+    })
 
 def main(*argv): 
   # Check arguments
@@ -911,11 +917,7 @@ def main(*argv):
     run_checks()
     list_versions(argv[-1])    
   elif "-nv" in argv:
-    update(silent=True)
-    print({
-      "installed":get_local_version(argv[-1]),
-      "latest":get_version(argv[-1])
-      })
+    checkPKG(argv)
   else:
     help()
 
