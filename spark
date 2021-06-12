@@ -13,6 +13,8 @@ from shutil import get_terminal_size
 from threading import Thread
 from time import *
 
+from pkg import packager
+
 
 #
 # ==============================================
@@ -942,6 +944,8 @@ def main(*argv):
     list_versions(argv[-1])    
   elif "-nv" in argv:
     checkPKG(argv)
+  elif "-p" in argv:
+    packager(argv[-1])
   else:
     help()
 

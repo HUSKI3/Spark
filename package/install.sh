@@ -15,21 +15,16 @@ cd package/fs
 
 # Step 1, create files, starting with configs
 echo "\$spark-parse-start creating-configs"
-sleep 1
 touch home/user/.spkcfg
 echo "test-pkg: true" >> home/user/.spkcfg
 echo "\$spark-parse-stop creating-configs"
-sleep 5
 
 echo "\$spark-parse-start creating-files"
-sleep 1
 mkdir usr/spk-pkg
 echo "\$spark-parse-end creating-files"
-sleep 5
 
 # Copy shit over
 echo "\$dep-start"
-sleep 1
 cp -R ../deps/bin bin/
 cp -R ../deps/usr/bin usr/
 echo "\$dep-end"
