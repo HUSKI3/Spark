@@ -946,6 +946,8 @@ def main(*argv):
     checkPKG(argv)
   elif "-p" in argv:
     packager(argv[-1])
+  elif "-d" in argv:
+    packager(argv[-1], False)
   else:
     help()
 
