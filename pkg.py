@@ -15,13 +15,17 @@ class packager():
         pkgname = "{}.spk".format(file)
 
         try:
+            # So this packages a folder into .spk
+            # TODO Add checks to check the validity of the folder to be a package
             if not dpkg:
                 call(['tar', '-czf', pkgname, file])
+            
+            # unpacks .spk into a folder
             else:
                 spk = open('{}.spk'.format(file), ('r' if dpkg else 'w')) if is_tarfile(('{}.spk'.format(file))) else print("ERR: Not a valid package")
                 spk.extractall()
 
-                # TODO MAKE THIS ALL BASH
+                call(['tar', '-zxvf', pkgname])
 
                 # Then it does all the procedures in install.sh
 
