@@ -2,34 +2,38 @@
 
 from tarfile import open, is_tarfile
 from subprocess import Popen, PIPE, call
+from os import popen
 
 class packager():
     """Packs/depacks files in .spk format
 
     Args:
         file (string): File/ Folder to be packed/unpacked
-        dpkg (bool, optional): If the file needs to be depacked. Defaults to True.
+        pkg (bool, optional): If the file needs to be depacked. Defaults to True.
     """
 
-    def __init__(self, file, dpkg=True):
+    def __init__(self, file, pkg=True):
         pkgname = "{}.spk".format(file)
 
         try:
             # So this packages a folder into .spk
-            # TODO Add checks to check the validity of the folder to be a package
-            if not dpkg:
-                call(['tar', '-czf', pkgname, file])
+            # TODO(Kunal): Add checks to check the validity of the folder to be a package
             
-            # unpacks .spk into a folder
+            # asks user for preference
+            # comment does not explain much
+            # basically next line packs
+            
+            # folder --> .spk if pkg is true else .spk --> folder
+            if 'y' in popen(f'if test -d {file}; then echo y; fi').read() and pkg:
+                    call(['tar', '-czf', pkgname, file])
+            elif 'y' in popen(f'if test -f {file}.spk; then echo y; fi').read() and not pkg:
+                call(['tar', '-zxvf', "{}.spk".format(file)])
             else:
-                spk = open('{}.spk'.format(file), ('r' if dpkg else 'w')) if is_tarfile(('{}.spk'.format(file))) else print("ERR: Not a valid package")
-                spk.extractall()
+                print("ERR: No such file in directory")
 
-                call(['tar', '-zxvf', pkgname])
+                # TODO(Kunal): install.sh
 
-                # Then it does all the procedures in install.sh
 
-                    
         except IOError:
             print("ERR: Package not found")
 
