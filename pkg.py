@@ -27,7 +27,7 @@ class packager():
             if 'y' in popen(f'if test -d {file}; then echo y; fi').read() and pkg:
                     call(['tar', '-czf', pkgname, file])
             elif 'y' in popen(f'if test -f {file}.spk; then echo y; fi').read() and not pkg:
-                call(['tar', '-zxvf', "{}.spk".format(file)])
+                call(['tar', '-zxvf', pkgname])
             else:
                 print("ERR: No such file in directory")
 
