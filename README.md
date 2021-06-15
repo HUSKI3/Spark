@@ -42,3 +42,8 @@ Folders to include are:
 Files to include are:
 - install.sh - install/build script for the package
 - metadata.json - metadata
+
+#### metadata.json (in a .spk package)
+"package-data"[0] --> a list of info from the spark repo fpr the package
+- "depends": in the package folder, deps/{dependency}
+- might need to make a fetch thing to fetch the data for this list from the repo
