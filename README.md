@@ -37,7 +37,8 @@ Folders to include are:
 - deps - for the dependencies
 - libs - for the libraries
 - fs - (is being worked on) for fake root, not to be interfered by the user as of now
+- bin - binary/s for the actual app
 
 Files to include are:
 - install.sh - install/build script for the package
-- metadata.json metadata
+- metadata.json - metadata
