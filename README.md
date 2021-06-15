@@ -33,11 +33,11 @@ INFO: Still in-dev, so is the documentation for them. They will undergo revamps 
 
 .spk is a tarfile with a fixed folder structure, meaning they wont contain any folders outsided the given specification
 
-Folders to include are
-deps - for the dependencies
-libs - for the libraries
-fs - (is being worked on) for fake root, not to be interfered by the user as of now
+Folders to include are:
+- deps - for the dependencies
+- libs - for the libraries
+- fs - (is being worked on) for fake root, not to be interfered by the user as of now
 
-Files to include are
-install.sh - install/build script for the package
-metadata.json metadata
+Files to include are:
+- install.sh - install/build script for the package
+- metadata.json metadata
