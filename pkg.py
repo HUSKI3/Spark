@@ -27,19 +27,21 @@ class packager():
             if 'y' in popen(f'if test -d {file}; then echo y; fi').read() and pkg:
                     call(['tar', '-czf', pkgname, file])
             elif 'y' in popen(f'if test -f {file}.spk; then echo y; fi').read() and not pkg:
-                call(['tar', '-zxvf', pkgname])
+                popen('tar -zxvf {}'.format(pkgname))
+                
+                print("running the package installer")
+                print(run_command(["bash", "install.sh"], file))
             else:
                 print("ERR: No such file in directory")
+            
 
-                # TODO(Kunal): install.sh
 
-
-        except IOError:
-            print("ERR: Package not found")
+        except IOError as err:
+            print("ERR: Package not found", err)
 
 
 # daemon? is that what this is called?
-def run_command(command):
+def run_command(command, dir):
     """A daemon, runs the command and gives output\n
     Will parse stuff
 
@@ -50,7 +52,7 @@ def run_command(command):
         String: Realtime output to the inputted command
     """
 
-    process = Popen(command, stdout=PIPE)
+    process = Popen(command, stdout=PIPE, cwd=dir)
     alive = True
     while alive:
         output = process.stdout.readline()      
