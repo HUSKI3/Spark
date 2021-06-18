@@ -19,26 +19,38 @@ class packager():
             # So this packages a folder into .spk
             # TODO(Kunal): Add checks to check the validity of the folder to be a package
             
+
+
             # asks user for preference
             # comment does not explain much
             # basically next line packs
             
             # folder --> .spk if pkg is true else .spk --> folder
-            if 'y' in popen(f'if test -d {file}; then echo y; fi').read() and pkg:
+            if checkFolder(file) and pkg:
                     call(['tar', '-czf', pkgname, file])
-            elif 'y' in popen(f'if test -f {file}.spk; then echo y; fi').read() and not pkg:
+            elif checkFolder(file) and not pkg:
                 popen('tar -zxvf {}'.format(pkgname))
                 
                 print("running the package installer")
                 print(run_command(["bash", "install.sh"], file))
             else:
                 print("ERR: No such file in directory")
-            
-
 
         except IOError as err:
             print("ERR: Package not found", err)
 
+        
+
+
+def checkFolder(file):
+    fileIsPresent = 1
+    if type(file) == '<class \'list\'>':
+        for x in file:
+            fileIsPresent = 0 if 'y' not in popen(f'if test -f {x}.spk; then echo y; fi').read() else None
+            # Normalise the returns to true or false
+            return True if fileIsPresent else False
+    else:
+        return 'y' in popen(f'if test -f {file}.spk; then echo y; fi').read()
 
 # daemon? is that what this is called?
 def run_command(command, dir):
