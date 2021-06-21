@@ -32,6 +32,7 @@ class packager():
                 print("running the package installer")
                 print(run_command(["bash", "install.sh"], file))
             elif checkFolder(file) and pkg:
+                print("packaging")
                 # Packaging (requires file)
                 system('tar -czf {} {}'.format(pkgname, file))
             else:
@@ -45,7 +46,7 @@ class packager():
 
 def checkFolder(file, baseDir=""):
     if not baseDir:
-        return 'y' in popen(f'if test -f {file}.spk; then echo y; fi').read()
+        return 'y' in popen(f'if test -d {file}; then echo y; fi').read()
     else:
         return 'y' in popen(f'if test -d {baseDir}/{file}; then echo y; fi').read()
 
