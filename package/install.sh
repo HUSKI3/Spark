@@ -14,4 +14,17 @@ cd package/fs
 
 
 # Step 1, create files, starting with configs
-$(whoami)
+echo "\$spark-parse-start creating-configs"
+touch home/user/.spkcfg
+echo "test-pkg: true" >> home/user/.spkcfg
+echo "\$spark-parse-stop creating-configs"
+
+echo "\$spark-parse-start creating-files"
+mkdir usr/spk-pkg
+echo "\$spark-parse-end creating-files"
+
+# Copy shit over
+echo "\$dep-start"
+cp -R ../deps/bin bin/
+cp -R ../deps/usr/bin usr/
+echo "\$dep-end"
