@@ -3,6 +3,7 @@
 from tarfile import open, is_tarfile
 from subprocess import Popen, PIPE, call
 from os import popen, system
+from glob import glob
 
 class packager():
     """Packs/depacks files in .spk format
@@ -44,11 +45,11 @@ class packager():
         
 
 
-def checkFolder(file, baseDir=""):
-    if not baseDir:
-        return 'y' in popen(f'if test -d {file}; then echo y; fi').read()
+def checkFolder(file):
+    if glob(file+'*'):
+        return True
     else:
-        return 'y' in popen(f'if test -d {baseDir}/{file}; then echo y; fi').read()
+        return False
 
 # daemon? is that what this is called?
 def run_command(command, dir):
