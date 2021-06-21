@@ -36,7 +36,7 @@ class packager():
                 print(run_command(["bash", "install.sh"], file))
             elif checkFolder(file) and pkg:
                 # Packaging (requires file and validation)
-                for dir in ['bin','fs','libs']:
+                for dir in ['bin','fs','libs', 'deps', 'install.sh', 'metadata.json']:
                     if not checkFolder(f'{file}/{dir}'):
                         print("ERR: Invalid package")
                         quit()
@@ -49,7 +49,7 @@ class packager():
             print("ERR: Package not found", err)
 
 def checkFolder(file):
-    if glob(file+'*'):
+    if glob(file):
         return True
     else:
         return False
