@@ -18,8 +18,13 @@ class packager():
         try:
             # So this packages a folder into .spk
             # TODO(Kunal): Add checks to check the validity of the folder to be a package
+            fileList = []
+            for x in ['bin', 'deps', 'fs', 'libs']:
+                fileList.append("{}/{}".format(file, x))
             
-
+            print(type(fileList))
+            print(checkFolder(fileList, isList=True))
+            input("hmmm")
 
             # asks user for preference
             # comment does not explain much
@@ -44,10 +49,14 @@ class packager():
         
 
 
-def checkFolder(file):
+def checkFolder(file, isList=False):
     fileIsPresent = 1
-    if type(file) == '<class \'list\'>':
+    print(type(file), isList)
+    if isList:
+        file = list(file)
         for x in file:
+            print(x)
+            input("hellolol")
             fileIsPresent = 0 if 'y' not in popen(f'if test -f {x}.spk; then echo y; fi').read() else None
             # Normalise the returns to true or false
             return True if fileIsPresent else False
