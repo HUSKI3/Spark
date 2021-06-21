@@ -18,30 +18,12 @@ class packager():
 
         try:
             # So this packages a folder into .spk
-            # TODO(Kunal): Add checks to check the validity of the folder to be a package
-            
-
-            # asks user for preference
-            # comment does not explain much
-            # basically next line packs
-            
             # folder --> .spk if pkg is true else .spk --> folder
-            
 
             if not pkg:
-                # Unpacking (file not required)
-                system('tar -zxvf {}'.format(pkgname))
-                
-                print("running the package installer")
-                print(run_command(["bash", "install.sh"], file))
+                dpkging(pkgname, file)
             elif checkFolder(file) and pkg:
-                # Packaging (requires file and validation)
-                for dir in ['bin','fs','libs', 'deps', 'install.sh', 'metadata.json']:
-                    if not checkFolder(f'{file}/{dir}'):
-                        print("ERR: Invalid package")
-                        quit()
-                print("packaging")
-                system('tar -czf {} {}'.format(pkgname, file))
+                pkging(file, pkgname)
             else:
                 print("ERR: No such file in directory")
 
@@ -53,6 +35,24 @@ def checkFolder(file):
         return True
     else:
         return False
+
+
+def dpkging(pkgname, file):
+    # Unpacking (file not required)
+    system('tar -zxvf {}'.format(pkgname))
+
+    print("running the package installer")
+    print(run_command(["bash", "install.sh"], file))
+
+def pkging(file, pkgname):
+    # Packaging (requires file and validation)
+    for dir in ['bin', 'fs', 'libs', 'deps', 'install.sh', 'metadata.json']:
+        if not checkFolder(f'{file}/{dir}'):
+            print("ERR: Invalid package")
+            quit()
+    print("packaging")
+    system('tar -czf {} {}'.format(pkgname, file))
+
 
 # daemon? is that what this is called?
 def run_command(command, dir):
