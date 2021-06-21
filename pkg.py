@@ -4,6 +4,7 @@ from tarfile import open, is_tarfile
 from subprocess import Popen, PIPE, call
 from os import popen, system
 from glob import glob
+from json import load
 
 class packager():
     """Packs/depacks files in .spk format
@@ -13,6 +14,7 @@ class packager():
         pkg (bool, optional): If the file needs to be depacked. Defaults to True.
     """
 
+
     def __init__(self, file, pkg=True):
         pkgname = "{}.spk".format(file)
 
@@ -21,14 +23,33 @@ class packager():
             # folder --> .spk if pkg is true else .spk --> folder
 
             if not pkg:
-                dpkging(pkgname, file)
+                self.dpkging(pkgname, file)
             elif checkFolder(file) and pkg:
-                pkging(file, pkgname)
+                self.pkging(file, pkgname)
             else:
                 print("ERR: No such file in directory")
 
         except IOError as err:
             print("ERR: Package not found", err)
+
+    def dpkging(self, pkgname, file):
+        # Unpacking (folder not required)
+        system('tar -zxvf {}'.format(pkgname))
+
+        print("running the package installer")
+        print(run_command(["bash", "install.sh"], file))
+
+        metadata = LoadMeta(file)
+
+    def pkging(self, file, pkgname):
+        # Packaging (requires folder and validation)
+        for dir in ['bin', 'fs', 'libs', 'deps', 'install.sh', 'metadata.json']:
+            if not checkFolder(f'{file}/{dir}'):
+                print("ERR: Invalid package")
+                quit()
+        print("packaging")
+        system('tar -czf {} {}'.format(pkgname, file))
+
 
 def checkFolder(file):
     if glob(file):
@@ -37,21 +58,6 @@ def checkFolder(file):
         return False
 
 
-def dpkging(pkgname, file):
-    # Unpacking (file not required)
-    system('tar -zxvf {}'.format(pkgname))
-
-    print("running the package installer")
-    print(run_command(["bash", "install.sh"], file))
-
-def pkging(file, pkgname):
-    # Packaging (requires file and validation)
-    for dir in ['bin', 'fs', 'libs', 'deps', 'install.sh', 'metadata.json']:
-        if not checkFolder(f'{file}/{dir}'):
-            print("ERR: Invalid package")
-            quit()
-    print("packaging")
-    system('tar -czf {} {}'.format(pkgname, file))
 
 
 # daemon? is that what this is called?
@@ -75,3 +81,8 @@ def run_command(command, dir):
 
     rc = process.poll()
     return rc
+
+
+def LoadMeta(file):
+    with open(f'{file}/metadata.json') as f:
+        metadata = load(f)
