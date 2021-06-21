@@ -38,13 +38,15 @@ class chroot:
         self.close_chroot()
 
     def shell_chroot(self):
+        # export PS1='\\e[0;32m(Chroot)[\\u@\\h \\W]\\$ \\e[0m'
+
         # Mount points
         run_command("sudo mount -t proc /proc proc".split(" "),self.chroot_home)
         run_command("sudo mount --rbind /sys sys".split(" "),self.chroot_home)
         run_command("sudo mount --rbind /dev dev".split(" "),self.chroot_home)
 
         # Enter chroot
-        run_command("sudo chroot . /bin/bash".split(" "),self.chroot_home)
+        run_command("sudo chroot . /bin/bash ".split(" "),self.chroot_home)
         self.close_chroot()
 
     def build_chroot(self):
@@ -61,7 +63,14 @@ class chroot:
     def close_chroot(self):
         run_command("sudo umount sys dev".split(" "),self.home)
 
+"""
+Clean chroot [Later tm]
+    rm -fr chroot/root/.bash_history
+    rm -fr chroot/var/log/*
+    rm -fr chroot/var/cache/apt/archives/*
+    rm -fr chroot/tmp/*
 
+"""
 
 
 
