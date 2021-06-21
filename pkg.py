@@ -42,9 +42,6 @@ class packager():
         except IOError as err:
             print("ERR: Package not found", err)
 
-        
-
-
 def checkFolder(file):
     if glob(file+'*'):
         return True
