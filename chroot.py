@@ -46,7 +46,7 @@ class chroot:
         run_command("sudo mount --rbind /dev dev".split(" "),self.chroot_home)
 
         # Enter chroot
-        run_command("sudo chroot . /bin/bash ".split(" "),self.chroot_home)
+        run_command("sudo chroot . /bin/bash".split(" "),self.chroot_home)
         self.close_chroot()
 
     def build_chroot(self):
