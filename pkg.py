@@ -18,13 +18,9 @@ class packager():
         try:
             # So this packages a folder into .spk
             # TODO(Kunal): Add checks to check the validity of the folder to be a package
-            fileList = []
-            for x in ['bin', 'deps', 'fs', 'libs']:
-                fileList.append("{}/{}".format(file, x))
             
-            print(type(fileList))
-            print(checkFolder(fileList, isList=True))
-            input("hmmm")
+
+            print(checkFolder("bin", baseDir=file))
 
             # asks user for preference
             # comment does not explain much
@@ -49,19 +45,11 @@ class packager():
         
 
 
-def checkFolder(file, isList=False):
-    fileIsPresent = 1
-    print(type(file), isList)
-    if isList:
-        file = list(file)
-        for x in file:
-            print(x)
-            input("hellolol")
-            fileIsPresent = 0 if 'y' not in popen(f'if test -f {x}.spk; then echo y; fi').read() else None
-            # Normalise the returns to true or false
-            return True if fileIsPresent else False
-    else:
+def checkFolder(file, baseDir=""):
+    if not baseDir:
         return 'y' in popen(f'if test -f {file}.spk; then echo y; fi').read()
+    else:
+        return 'y' in popen(f'if test -d {baseDir}/{file}; then echo y; fi').read()
 
 # daemon? is that what this is called?
 def run_command(command, dir):
