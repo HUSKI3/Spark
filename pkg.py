@@ -20,8 +20,6 @@ class packager():
             # TODO(Kunal): Add checks to check the validity of the folder to be a package
             
 
-            print(checkFolder("bin", baseDir=file))
-
             # asks user for preference
             # comment does not explain much
             # basically next line packs
