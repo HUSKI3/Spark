@@ -85,4 +85,5 @@ def run_command(command, dir):
 
 def LoadMeta(file):
     with open(f'{file}/metadata.json') as f:
-        metadata = load(f)
+        return load(f)
+
