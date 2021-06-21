@@ -33,7 +33,7 @@ class packager():
                 print(run_command(["bash", "install.sh"], file))
             elif checkFolder(file) and pkg:
                 # Packaging (requires file)
-                call(['tar', '-czf', pkgname, file])
+                system('tar -czf {} {}'.format(pkgname, file))
             else:
                 print("ERR: No such file in directory")
 
