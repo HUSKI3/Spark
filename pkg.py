@@ -36,9 +36,12 @@ class packager():
                 print(run_command(["bash", "install.sh"], file))
             elif checkFolder(file) and pkg:
                 # Packaging (requires file and validation)
-                if checkFolder(f'{file}/bin') and checkFolder(f'{file}/deps') and checkFolder(f'{file}/fs') and checkFolder(f'{file}/libs'):
-                    print("packaging")
-                    system('tar -czf {} {}'.format(pkgname, file))
+                for dir in ['bin','fs','libs']:
+                    if not checkFolder(f'{file}/{dir}'):
+                        print("ERR: Invalid package")
+                        quit()
+                print("packaging")
+                system('tar -czf {} {}'.format(pkgname, file))
                 else:
                     print("ERR: Package(folder) is not valid")
             else:
