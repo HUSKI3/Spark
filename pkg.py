@@ -42,8 +42,6 @@ class packager():
                         quit()
                 print("packaging")
                 system('tar -czf {} {}'.format(pkgname, file))
-                else:
-                    print("ERR: Package(folder) is not valid")
             else:
                 print("ERR: No such file in directory")
 
