@@ -25,18 +25,22 @@ class packager():
             # basically next line packs
             
             # folder --> .spk if pkg is true else .spk --> folder
-            if not pkg:
-                # Unpacking (file not required)
-                system('tar -zxvf {}'.format(pkgname))
-                
-                print("running the package installer")
-                print(run_command(["bash", "install.sh"], file))
-            elif checkFolder(file) and pkg:
-                print("packaging")
-                # Packaging (requires file)
-                system('tar -czf {} {}'.format(pkgname, file))
+            
+            if checkFolder(f'{file}/bin') and checkFolder(f'{file}/deps') and checkFolder(f'{file}/fs') and checkFolder(f'{file}/libs'):
+                if not pkg:
+                    # Unpacking (file not required)
+                    system('tar -zxvf {}'.format(pkgname))
+                    
+                    print("running the package installer")
+                    print(run_command(["bash", "install.sh"], file))
+                elif checkFolder(file) and pkg:
+                    print("packaging")
+                    # Packaging (requires file)
+                    system('tar -czf {} {}'.format(pkgname, file))
+                else:
+                    print("ERR: No such file in directory")
             else:
-                print("ERR: No such file in directory")
+                print("ERR: Package(folder) is not valid")
 
         except IOError as err:
             print("ERR: Package not found", err)
