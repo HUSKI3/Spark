@@ -77,6 +77,3 @@ def run_command(command, dir):
 
     rc = process.poll()
     return rc
-
-
-# run_command(["bash", "./package/install.sh"])
