@@ -2,7 +2,7 @@
 
 from tarfile import open, is_tarfile
 from subprocess import Popen, PIPE, call
-from os import popen
+from os import popen, system
 
 class packager():
     """Packs/depacks files in .spk format
@@ -26,13 +26,15 @@ class packager():
             # basically next line packs
             
             # folder --> .spk if pkg is true else .spk --> folder
-            if checkFolder(file) and pkg:
-                    call(['tar', '-czf', pkgname, file])
-            elif checkFolder(file) and not pkg:
-                popen('tar -zxvf {}'.format(pkgname))
+            if not pkg:
+                # Unpacking (file not required)
+                system('tar -zxvf {}'.format(pkgname))
                 
                 print("running the package installer")
                 print(run_command(["bash", "install.sh"], file))
+            elif checkFolder(file) and pkg:
+                # Packaging (requires file)
+                call(['tar', '-czf', pkgname, file])
             else:
                 print("ERR: No such file in directory")
 

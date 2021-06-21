@@ -5,13 +5,16 @@
             "version": "3.12.4f12",
             "url": "",
             "size": 0,
-            "depends": ["iceshard"],
+            "depends": [
+                "iceshard"
+            ],
             "build": ""
         },
         {
-            "user-bin": ["iceshard"],
+            "user-bin": [
+                "iceshard"
+            ],
             "system-bin": []
         }
-    
     ]
 }

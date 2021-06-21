@@ -28,5 +28,3 @@ echo "\$dep-start"
 cp -R ../deps/bin bin/
 cp -R ../deps/usr/bin usr/
 echo "\$dep-end"
-
-
