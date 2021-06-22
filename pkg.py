@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from tarfile import open, is_tarfile
+from tarfile import open as topen, is_tarfile
 from subprocess import Popen, PIPE, call
 from os import popen, system
 from glob import glob
@@ -85,5 +85,5 @@ def run_command(command, dir):
 
 def LoadMeta(file):
     with open(f'{file}/metadata.json') as f:
-        return load(f)
-
+        metadata = load(f)
+        return metadata
