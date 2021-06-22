@@ -52,12 +52,7 @@ class packager():
 
 
 def checkFolder(file):
-    if glob(file):
-        return True
-    else:
-        return False
-
-
+    return True if glob(file) else False
 
 
 # daemon? is that what this is called?
