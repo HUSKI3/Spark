@@ -55,7 +55,7 @@ def checkFolder(file):
     return True if glob(file) else False
 
 
-# daemon? is that what this is called?
+# runs install.sh
 def run_command(command, dir):
     """A daemon, runs the command and gives output\n
     Will parse stuff
