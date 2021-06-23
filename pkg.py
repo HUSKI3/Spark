@@ -2,12 +2,12 @@
 
 from tarfile import open as topen, is_tarfile
 from subprocess import Popen, PIPE, call
-from os import popen, system
+from os import popen, path
 from glob import glob
 from json import load
 
+path.dirname(path.realpath(__file__))
 
-# TODO(Kunal): CLean up the outputs
 # TODO(Kunal, Artur): Get install thing working better with parsed outputs and all
 
 class packager():
@@ -38,7 +38,7 @@ class packager():
 
     def dpkging(self, pkgname, file):
         # Unpacking (folder not required)
-        system('tar -zxvf {}'.format(pkgname))
+        popen('tar -zxvf {}'.format(pkgname)).read()
 
         print("running the package installer")
         print(run_command(["bash", "install.sh"], file))
@@ -52,7 +52,7 @@ class packager():
                 print("ERR: Invalid package")
                 quit()
         print("packaging")
-        system('tar -czf {} {}'.format(pkgname, file))
+        popen('tar -czf {} {}'.format(pkgname, file)).read()
 
 
 def checkFolder(file):
