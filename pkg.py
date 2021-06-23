@@ -41,11 +41,17 @@ class packager():
             print("ERR: Package not found", err)
 
     def dpkging(self, pkgname, file):
-        # Unpacking (folder not required)
+        result = run(f"tar xfOs {pkgname} {file}/metadata.json | cat".split(" "), stdout=PIPE)
+        result = result.stdout.decode('utf-8')
+        result = loads(result)
+
         popen('tar -zxvf {}'.format(pkgname)).read()
 
-        print("running the package installer")
-        print(run_command(["bash", "install.sh"], file))
+        print("Running the package installer...")
+
+        system(result['package-data'][0]['install'])
+
+        print("Done!")
 
 
     def read_meta(self,pkgname,file):
