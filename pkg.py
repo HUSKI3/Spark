@@ -6,6 +6,10 @@ from os import popen, system
 from glob import glob
 from json import load
 
+
+# TODO(Kunal): CLean up the outputs
+# TODO(Kunal, Artur): Get install thing working better with parsed outputs and all
+
 class packager():
     """Packs/depacks files in .spk format
 
