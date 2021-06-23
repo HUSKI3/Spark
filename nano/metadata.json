@@ -7,13 +7,7 @@
             "size": 140,
             "depends": [],
             "build": "",
-            "install":"nano/install.sh /usr/bin/"
-        },
-        {
-            "user-bin": [
-                "nano"
-            ],
-            "system-bin": []
+            "install":"nano/install.sh"
         }
     ]
 }
