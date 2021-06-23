@@ -1,0 +1,19 @@
+{
+    "package-data": [
+        {
+            "name": "nano",
+            "version": "5.7",
+            "url": "https://www.nano-editor.org/",
+            "size": 140,
+            "depends": [],
+            "build": "",
+            "install":"nano/install.sh /usr/bin/"
+        },
+        {
+            "user-bin": [
+                "nano"
+            ],
+            "system-bin": []
+        }
+    ]
+}

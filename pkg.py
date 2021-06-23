@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 from tarfile import open as topen, is_tarfile
-from subprocess import Popen, PIPE, call
-from os import popen, path
+from subprocess import Popen, PIPE, call, check_output, run
+from os import popen, system
 from glob import glob
-from json import load
+from json import load, loads
 
 path.dirname(path.realpath(__file__))
 
@@ -19,12 +19,15 @@ class packager():
     """
 
 
-    def __init__(self, file, pkg=True):
+    def __init__(self, file, pkg=True, meta=False):
         pkgname = "{}.spk".format(file)
 
         try:
             # So this packages a folder into .spk
             # folder --> .spk if pkg is true else .spk --> folder
+            if meta:
+                self.read_meta(pkgname, file)
+                return
 
             if not pkg:
                 self.dpkging(pkgname, file)
@@ -43,7 +46,25 @@ class packager():
         print("running the package installer")
         print(run_command(["bash", "install.sh"], file))
 
-        metadata = LoadMeta(file)
+
+    def read_meta(self,pkgname,file):
+        # tar xfO nano.spk nano/metadata.json | cat
+        result = run(f"tar xfOs {pkgname} {file}/metadata.json | cat".split(" "), stdout=PIPE)
+        result = result.stdout.decode('utf-8')
+        result = loads(result)
+        files = run(f"tar tf {pkgname} ".split(" "), stdout=PIPE)
+        files = files.stdout.decode('utf-8')
+        #print(check_output(f"tar xfO {pkgname} {file}/metadata.json | cat".split(" ")))
+        print(f"""
+Package info:
+Name: {result['package-data'][0]['name']}
+Size: {result['package-data'][0]['size']}
+Depends on: {result['package-data'][0]['depends']}
+Build instructions: {result['package-data'][0]['build']}
+Install instructions: {result['package-data'][0]['build']}
+Files in package: 
+{files}
+""")
 
     def pkging(self, file, pkgname):
         # Packaging (requires folder and validation)
