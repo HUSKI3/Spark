@@ -948,6 +948,8 @@ def main(*argv):
     packager(argv[-1])
   elif "-dp" in argv:
     packager(argv[-1], False)
+  elif "-cm" in argv:
+    packager(argv[-1], False, meta=True)
   else:
     help()
 
