@@ -6,6 +6,10 @@ from os import popen, system
 from glob import glob
 from json import load, loads
 
+path.dirname(path.realpath(__file__))
+
+# TODO(Kunal, Artur): Get install thing working better with parsed outputs and all
+
 class packager():
     """Packs/depacks files in .spk format
 
@@ -37,7 +41,7 @@ class packager():
 
     def dpkging(self, pkgname, file):
         # Unpacking (folder not required)
-        system('tar -zxvf {}'.format(pkgname))
+        popen('tar -zxvf {}'.format(pkgname)).read()
 
         print("running the package installer")
         print(run_command(["bash", "install.sh"], file))
@@ -69,7 +73,7 @@ Files in package:
                 print("ERR: Invalid package")
                 quit()
         print("packaging")
-        system('tar -czf {} {}'.format(pkgname, file))
+        popen('tar -czf {} {}'.format(pkgname, file)).read()
 
 
 def checkFolder(file):
