@@ -1,5 +1,0 @@
-./configure --prefix=$HOME/Spark/testing/fs/usr     \
-            --sysconfdir=$HOME/Spark/testing/fs/etc \
-            --enable-utf8     \
-            --docdir=$HOME/Spark/testing/fs/usr/share/doc/nano-5.8 &&
-make
