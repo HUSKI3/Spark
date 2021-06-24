@@ -53,8 +53,7 @@ class packager():
         # run_command(["bash", "install.sh"], file)
         
         print("Running the package installer...")
-        system(result['package-data'][0]['install'])
-        print("Done!")
+        run_command(["bash", (result['package-data'][0]['install'])], file)
 
 
     def read_meta(self,pkgname,file):
@@ -66,15 +65,15 @@ class packager():
         files = files.stdout.decode('utf-8')
         #print(check_output(f"tar xfO {pkgname} {file}/metadata.json | cat".split(" ")))
         print(f"""
-Package info:
-Name: {result['package-data'][0]['name']}
-Size: {result['package-data'][0]['size']}
-Depends on: {result['package-data'][0]['depends']}
-Build instructions: {result['package-data'][0]['build']}
-Install instructions: {result['package-data'][0]['build']}
-Files in package: 
-{files}
-""")
+            Package info:
+            Name: {result['package-data'][0]['name']}
+            Size: {result['package-data'][0]['size']}
+            Depends on: {result['package-data'][0]['depends']}
+            Build instructions: {result['package-data'][0]['build']}
+            Install instructions: {result['package-data'][0]['build']}
+            Files in package: 
+            {files}
+        """)
 
     def pkging(self, file, pkgname):
         # Packaging (requires folder and validation)
