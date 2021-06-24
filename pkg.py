@@ -5,7 +5,7 @@ from tarfile import open as topen, is_tarfile
 from subprocess import Popen, PIPE, call, check_output, run
 from os import popen, system, path
 from glob import glob
-from json import load
+from json import load, loads
 from style.colours import colours
 
 path.dirname(path.realpath(__file__))
