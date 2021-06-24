@@ -5,6 +5,7 @@ from subprocess import Popen, PIPE, call
 from os import popen, path
 from glob import glob
 from json import load
+from style.colours import colours
 
 path.dirname(path.realpath(__file__))
 
@@ -41,7 +42,7 @@ class packager():
         popen('tar -zxvf {}'.format(pkgname)).read()
 
         print("running the package installer")
-        print(run_command(["bash", "install.sh"], file))
+        run_command(["bash", "install.sh"], file)
 
         metadata = LoadMeta(file)
 
@@ -75,12 +76,15 @@ def run_command(command, dir):
     alive = True
     while alive:
         output = process.stdout.readline()      
-        print(output.strip().decode("utf-8")) if output else None
+        print(parse(output.strip().decode("utf-8"))) if output else None
         alive = process.poll() is None
 
     rc = process.poll()
     return rc
 
+def parse(output):
+    if output == "$SUCCESS":
+        return colours.GREEN_SUCCESS + "SUCCESS" + colours.RESET
 
 def LoadMeta(file):
     with open(f'{file}/metadata.json') as f:
