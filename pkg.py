@@ -77,7 +77,7 @@ class packager():
 
     def pkging(self, file, pkgname):
         # Packaging (requires folder and validation)
-        for dir in ['bin', 'fs', 'libs', 'deps', 'install.sh', 'metadata.json']:
+        for dir in ['fs', 'install.sh', 'metadata.json']:
             if not checkFolder(f'{file}/{dir}'):
                 print("ERR: Invalid package")
                 quit()

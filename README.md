@@ -34,10 +34,7 @@ INFO: Still in-dev, so is the documentation for them. They will undergo revamps 
 .spk is a tarfile with a fixed folder structure, meaning they wont contain any folders outsided the given specification
 
 Folders to include are:
-- deps - for the dependencies
-- libs - for the libraries
 - fs - (is being worked on) for fake root, not to be interfered by the user as of now
-- bin - binary/s for the actual app
 - src(optional) - source for the package
 
 Files to include are:
