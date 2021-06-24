@@ -21,14 +21,14 @@ class packager():
     """
 
 
-    def __init__(self, file, pkg=True, meta=False):
+    def __init__(self, file, pkg=True, meta=False, longg=False):
         pkgname = "{}.spk".format(file)
 
         try:
             # So this packages a folder into .spk
             # folder --> .spk if pkg is true else .spk --> folder
             if meta:
-                self.read_meta(pkgname, file)
+                self.read_meta(pkgname, file, longg)
                 return
 
             if not pkg:
@@ -56,7 +56,7 @@ class packager():
         run_command(["bash", (result['package-data'][0]['install'])], file)
 
 
-    def read_meta(self,pkgname,file):
+    def read_meta(self,pkgname,file,longg):
         # tar xfO nano.spk nano/metadata.json | cat
         result = run(f"tar xfOs {pkgname} {file}/metadata.json | cat".split(" "), stdout=PIPE)
         result = result.stdout.decode('utf-8')
@@ -65,15 +65,15 @@ class packager():
         files = files.stdout.decode('utf-8')
         #print(check_output(f"tar xfO {pkgname} {file}/metadata.json | cat".split(" ")))
         print(f"""
-            Package info:
-            Name: {result['package-data'][0]['name']}
-            Size: {result['package-data'][0]['size']}
-            Depends on: {result['package-data'][0]['depends']}
-            Build instructions: {result['package-data'][0]['build']}
-            Install instructions: {result['package-data'][0]['build']}
-            Files in package: 
-            {files}
+Package info:
+\tName: {result['package-data'][0]['name']}
+\tSize: {result['package-data'][0]['size']}
+\tDepends on: {result['package-data'][0]['depends']}
+\tBuild instructions: {result['package-data'][0]['build']}
+\tInstall instructions: {result['package-data'][0]['install']}
         """)
+        if longg:
+            print(f"Files in package: {files}")
 
     def pkging(self, file, pkgname):
         # Packaging (requires folder and validation)

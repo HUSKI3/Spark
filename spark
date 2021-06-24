@@ -959,7 +959,10 @@ def main(*argv):
   elif "-dp" in argv:
     packager(argv[-1], False)
   elif "-cm" in argv:
-    packager(argv[-1], False, meta=True)
+    if "-l" in argv:
+      packager(argv[-1], False, meta=True, longg=True)
+    else:
+      packager(argv[-1], False, meta=True)
   else:
     help()
 
