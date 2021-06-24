@@ -5,7 +5,8 @@ from tarfile import open as topen, is_tarfile
 from subprocess import Popen, PIPE, call, check_output, run
 from os import popen, system, path
 from glob import glob
-from json import load, loads
+from json import load
+from style.colours import colours
 
 path.dirname(path.realpath(__file__))
 
@@ -47,10 +48,12 @@ class packager():
 
         popen('tar -zxvf {}'.format(pkgname)).read()
 
+
+        # print("running the package installer")
+        # run_command(["bash", "install.sh"], file)
+        
         print("Running the package installer...")
-
         system(result['package-data'][0]['install'])
-
         print("Done!")
 
 
@@ -103,12 +106,15 @@ def run_command(command, dir):
     alive = True
     while alive:
         output = process.stdout.readline()      
-        print(output.strip().decode("utf-8")) if output else None
+        print(parse(output.strip().decode("utf-8"))) if output else None
         alive = process.poll() is None
 
     rc = process.poll()
     return rc
 
+def parse(output):
+    if output == "$SUCCESS":
+        return colours.GREEN_SUCCESS + "SUCCESS" + colours.RESET
 
 def LoadMeta(file):
     with open(f'{file}/metadata.json') as f:
