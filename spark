@@ -277,11 +277,11 @@ def dirs(sudo):
       f.read()
       return 0
   except:
-    os.system("{}mkdir -p /usr/spark".format("sudo " if sudo else ""))
-    os.system("{}mkdir -p /usr/spark/tmp".format("sudo " if sudo else ""))
-    os.system("{}mkdir -p /usr/spark/packs && sudo touch /usr/spark/packs/installed && sudo touch /usr/spark/spark.check && sudo chmod 777 /usr/spark/packs/installed".format("sudo " if sudo else ""))
-    os.system("{}mkdir -p /usr/spark/dimensions && sudo touch /usr/spark/dimensions/dimensions.config".format("sudo " if sudo else ""))
-    os.system("{}mkdir -p /usr/spark/installed/_local".format("sudo " if sudo else ""))
+    os.system("mkdir -p /usr/spark"  )
+    os.system("mkdir -p /usr/spark/tmp"  )
+    os.system("mkdir -p /usr/spark/packs && touch /usr/spark/packs/installed && touch /usr/spark/spark.check && chmod 777 /usr/spark/packs/installed"  )
+    os.system("mkdir -p /usr/spark/dimensions && touch /usr/spark/dimensions/dimensions.config"  )
+    os.system("mkdir -p /usr/spark/installed/_local"  )
     return 1
 
 # Help command
@@ -526,6 +526,12 @@ def install(package,force=False, spec_ver=None):
               print("Could not install {} :/".format(dep))
               quit()
             local = get_src(dpack['url'],dep,dpack['version'])
+
+            ###
+            ###   modify for new packages (Artur)
+            ###
+
+
             unpack(dep,local)
             build(dep,dpack['build'])
             #print(dep,dpack)
@@ -544,6 +550,10 @@ def install(package,force=False, spec_ver=None):
       return False
     return True
   return False
+
+            ###
+            ###
+            ###
 
 # Uninstall
 def uninstall(package,force=False):
@@ -948,6 +958,8 @@ def main(*argv):
     packager(argv[-1])
   elif "-dp" in argv:
     packager(argv[-1], False)
+  elif "-cm" in argv:
+    packager(argv[-1], False, meta=True)
   else:
     help()
 
